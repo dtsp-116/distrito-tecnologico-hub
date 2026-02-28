@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DistrictLogo } from "@/components/DistrictLogo";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface HeaderProps {
@@ -43,7 +42,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <Link
             href="/perfil"
             className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-district-border text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"

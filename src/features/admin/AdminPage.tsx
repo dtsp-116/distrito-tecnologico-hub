@@ -66,6 +66,8 @@ export function AdminPage() {
 
   const [activeTab, setActiveTab] = useState<"editais" | "agencias">("editais");
   const [noticeSearch, setNoticeSearch] = useState("");
+  const [noticeFilterAgencyId, setNoticeFilterAgencyId] = useState("");
+  const [noticeFilterStatus, setNoticeFilterStatus] = useState<EditalStatus | "">("");
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
   const [isCreatingNewNotice, setIsCreatingNewNotice] = useState(false);
   const [agencyForm, setAgencyForm] = useState({ nome: "", sigla: "", descricao: "" });
@@ -99,14 +101,17 @@ export function AdminPage() {
 
   const filteredNotices = useMemo(() => {
     const query = noticeSearch.trim().toLowerCase();
-    if (!query) return editais;
-    return editais.filter(
-      (edital) =>
+    return editais.filter((edital) => {
+      const matchesQuery =
+        !query ||
         edital.nome.toLowerCase().includes(query) ||
         edital.resumo.toLowerCase().includes(query) ||
-        edital.status.toLowerCase().includes(query)
-    );
-  }, [editais, noticeSearch]);
+        edital.status.toLowerCase().includes(query);
+      const matchesAgency = !noticeFilterAgencyId || edital.agenciaId === noticeFilterAgencyId;
+      const matchesStatus = !noticeFilterStatus || edital.status === noticeFilterStatus;
+      return matchesQuery && matchesAgency && matchesStatus;
+    });
+  }, [editais, noticeSearch, noticeFilterAgencyId, noticeFilterStatus]);
 
   const selectedNotice = useMemo(
     () => editais.find((item) => item.id === selectedNoticeId) ?? null,
@@ -295,28 +300,46 @@ export function AdminPage() {
         <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-5">
           <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Painel do administrador</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Fluxo otimizado para criar, editar e excluir editais com arquivos e RAG.</p>
-          <div className="mt-4 grid gap-3 rounded-md border border-district-border p-3 dark:border-gray-700 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+          <div className="mt-4 grid gap-3 rounded-md border border-district-border p-3 dark:border-gray-700">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Nivel da busca RAG
               </label>
-              <select
-                value={localRagLevel}
-                onChange={(event) => setLocalRagLevel(event.target.value as "baixo" | "medio" | "alto")}
-                className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              >
-                <option value="baixo">Baixo (mais estrito)</option>
-                <option value="medio">Medio (equilibrado)</option>
-                <option value="alto">Alto (mais abrangente)</option>
-              </select>
+              <div className="inline-flex rounded-md border border-district-border bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800/80">
+                {(["baixo", "medio", "alto"] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setLocalRagLevel(level)}
+                    aria-pressed={localRagLevel === level}
+                    className={`h-8 rounded px-3 text-xs font-semibold uppercase tracking-wide transition ${
+                      localRagLevel === level
+                        ? "bg-district-red text-white shadow-sm"
+                        : "text-gray-600 hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {localRagLevel === "baixo"
+                  ? "Busca mais estrita e focada."
+                  : localRagLevel === "medio"
+                    ? "Equilibrio entre precisao e abrangencia."
+                    : "Busca mais ampla para maior cobertura."}
+              </p>
             </div>
             <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
               <input
                 type="checkbox"
                 checked={localLegacyFallback}
                 onChange={(event) => setLocalLegacyFallback(event.target.checked)}
-                className="h-4 w-4 rounded border-district-border text-district-red focus:ring-red-200 dark:border-gray-700"
+                className="peer sr-only"
               />
+              <span className="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-300 transition peer-checked:bg-district-red dark:bg-gray-700">
+                <span className="h-4 w-4 translate-x-0.5 rounded-full bg-white shadow-sm transition peer-checked:translate-x-4" />
+              </span>
               Fallback lexical/simples
             </label>
             <button
@@ -360,6 +383,46 @@ export function AdminPage() {
                 <input value={noticeSearch} onChange={(event) => setNoticeSearch(event.target.value)} placeholder="Buscar edital..." className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" />
                 <button type="button" onClick={() => { setIsCreatingNewNotice(true); setSelectedNoticeId(null); setEditalForm(getEmptyNoticeForm()); setTagInput(""); setNoticeFileSearch(""); }} className="h-10 rounded-md border border-district-border px-3 text-sm font-semibold">Novo</button>
               </div>
+              <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                <select
+                  value={noticeFilterAgencyId}
+                  onChange={(event) => setNoticeFilterAgencyId(event.target.value)}
+                  className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                >
+                  <option value="">Todas as agencias</option>
+                  {agencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={noticeFilterStatus}
+                  onChange={(event) => setNoticeFilterStatus(event.target.value as EditalStatus | "")}
+                  className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                >
+                  <option value="">Todos os status</option>
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {(noticeSearch || noticeFilterAgencyId || noticeFilterStatus) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNoticeSearch("");
+                    setNoticeFilterAgencyId("");
+                    setNoticeFilterStatus("");
+                  }}
+                  className="mb-3 h-9 rounded-md border border-district-border px-3 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                >
+                  Limpar filtros
+                </button>
+              )}
+              <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{filteredNotices.length} edital(is) encontrado(s)</p>
               <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
                 {filteredNotices.map((edital) => (
                   <button key={edital.id} type="button" onClick={() => { setIsCreatingNewNotice(false); setSelectedNoticeId(edital.id); }} className={`w-full rounded-md border px-3 py-2 text-left ${selectedNoticeId === edital.id ? "border-district-red bg-red-50 dark:bg-red-950/20" : "border-district-border hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"}`}>

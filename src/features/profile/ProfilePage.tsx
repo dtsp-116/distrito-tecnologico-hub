@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Agencia } from "@/types";
 
 interface ProfilePageProps {
@@ -68,6 +69,9 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
   return (
     <MainLayout agencias={agencias}>
       <section className="mx-auto max-w-2xl rounded-mdx border border-district-border bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-6">
+        <div className="mb-3 flex justify-end">
+          <ThemeToggle />
+        </div>
         <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Meu perfil</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
           Atualize seu nome de exibicao e senha de acesso.

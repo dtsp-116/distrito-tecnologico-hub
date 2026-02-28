@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DistrictLogo } from "@/components/DistrictLogo";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function RegisterPage() {
@@ -59,9 +58,6 @@ export function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-6 dark:bg-gray-950">
       <section className="w-full max-w-md rounded-mdx border border-district-border bg-white p-6 shadow-card dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-4 flex justify-end">
-          <ThemeToggle />
-        </div>
         <div className="mb-6 flex justify-center">
           <DistrictLogo href="/cadastro" />
         </div>
