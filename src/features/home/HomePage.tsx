@@ -158,7 +158,11 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
                 key={edital.id}
                 edital={edital}
                 agencia={agencias.find((agencia) => agencia.id === edital.agenciaId)}
-                topicos={topicos.filter((topico) => edital.topicos.includes(topico.id))}
+                topicos={topicos.filter(
+                  (topico) =>
+                    edital.topicos.includes(topico.id) ||
+                    edital.topicos.some((item) => item.toLowerCase() === topico.nome.toLowerCase())
+                )}
               />
             ))}
           </section>

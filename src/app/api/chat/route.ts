@@ -109,6 +109,76 @@ function parseTrlFromQuestion(question: string): number | null {
   return Number.isFinite(value) && value >= 1 && value <= 9 ? value : null;
 }
 
+function parsePtBrNumberToFloat(rawValue: string) {
+  const value = rawValue.replace(/\s/g, "");
+  if (value.includes(",") && value.includes(".")) {
+    return Number(value.replace(/\./g, "").replace(",", "."));
+  }
+  if (value.includes(",")) return Number(value.replace(",", "."));
+  return Number(value);
+}
+
+function toCurrencyByUnit(value: number, unit: string | undefined) {
+  if (!Number.isFinite(value)) return null;
+  const normalizedUnit = (unit ?? "").toLowerCase();
+  if (normalizedUnit === "milhao" || normalizedUnit === "milhoes" || normalizedUnit === "mi") {
+    return value * 1_000_000;
+  }
+  if (normalizedUnit === "mil" || normalizedUnit === "k") {
+    return value * 1_000;
+  }
+  return value;
+}
+
+function extractBudgetRangeFromText(text: string): { min: number | null; max: number | null } | null {
+  const normalized = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const betweenMatch = normalized.match(
+    /entre\s*r?\$?\s*(\d[\d\.,]*)\s*(milhao|milhoes|mi|mil|k)?\s*e\s*r?\$?\s*(\d[\d\.,]*)\s*(milhao|milhoes|mi|mil|k)?/
+  );
+  if (betweenMatch) {
+    const left = toCurrencyByUnit(parsePtBrNumberToFloat(betweenMatch[1]), betweenMatch[2]);
+    const right = toCurrencyByUnit(parsePtBrNumberToFloat(betweenMatch[3]), betweenMatch[4] ?? betweenMatch[2]);
+    if (left !== null && right !== null) {
+      return { min: Math.min(left, right), max: Math.max(left, right) };
+    }
+  }
+
+  const rangeMatch = normalized.match(
+    /r?\$?\s*(\d[\d\.,]*)\s*(milhao|milhoes|mi|mil|k)?\s*(?:a|ate|-|–)\s*r?\$?\s*(\d[\d\.,]*)\s*(milhao|milhoes|mi|mil|k)?/
+  );
+  if (rangeMatch) {
+    const left = toCurrencyByUnit(parsePtBrNumberToFloat(rangeMatch[1]), rangeMatch[2]);
+    const right = toCurrencyByUnit(parsePtBrNumberToFloat(rangeMatch[3]), rangeMatch[4] ?? rangeMatch[2]);
+    if (left !== null && right !== null) {
+      return { min: Math.min(left, right), max: Math.max(left, right) };
+    }
+  }
+
+  return null;
+}
+
+function extractTrlRangeFromText(text: string): { min: number | null; max: number | null } | null {
+  const normalized = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const trlRangeMatch = normalized.match(/(?:trl|maturidade tecnologica)[^\d]{0,20}(\d)\s*(?:a|ate|-|–|e)\s*(\d)/);
+  if (trlRangeMatch) {
+    const left = Number(trlRangeMatch[1]);
+    const right = Number(trlRangeMatch[2]);
+    if (left >= 1 && left <= 9 && right >= 1 && right <= 9) {
+      return { min: Math.min(left, right), max: Math.max(left, right) };
+    }
+  }
+
+  return null;
+}
+
 function toNumberOrNull(value: number | string | null | undefined): number | null {
   if (value === null || value === undefined) return null;
   const converted = Number(value);
@@ -122,6 +192,15 @@ function formatCurrencyBRL(value: number | null) {
     currency: "BRL",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+function isBudgetQuestion(question: string) {
+  const normalized = question.toLowerCase();
+  return /valor|faixa|range|orcamento|orçamento|milhao|milhões|milhoes|r\$/i.test(normalized);
+}
+
+function isTrlQuestion(question: string) {
+  return /\btrl\b|nivel de maturidade|nível de maturidade/i.test(question.toLowerCase());
 }
 
 function isFutureDate(dateValue: string) {
@@ -260,6 +339,21 @@ export async function POST(request: Request) {
     const ragConfig = getRagConfig(searchLevel);
 
     if (payload.noticeId) {
+      interface NoticeStructuredData {
+        id: string;
+        title: string;
+        summary: string | null;
+        description: string | null;
+        status: NoticeStatus;
+        publish_date: string | null;
+        deadline_date: string | null;
+        access_link: string | null;
+        budget_min: number | string | null;
+        budget_max: number | string | null;
+        trl_min: number | string | null;
+        trl_max: number | string | null;
+      }
+
       const queryEmbedding = process.env.OPENAI_API_KEY
         ? await generateEmbedding(lastUserQuestion).catch(() => null)
         : null;
@@ -267,7 +361,7 @@ export async function POST(request: Request) {
       const [noticeResult, hybridResult] = await Promise.all([
         supabase
           .from("notices")
-          .select("id,title,summary,description")
+          .select("id,title,summary,description,status,publish_date,deadline_date,access_link,budget_min,budget_max,trl_min,trl_max")
           .eq("id", payload.noticeId)
           .maybeSingle(),
         supabase.rpc("search_notice_chunks_hybrid", {
@@ -278,7 +372,105 @@ export async function POST(request: Request) {
         })
       ]);
 
-      const notice = noticeResult.data;
+      const notice = noticeResult.data as NoticeStructuredData | null;
+      const noticeBudgetMin = toNumberOrNull(notice?.budget_min);
+      const noticeBudgetMax = toNumberOrNull(notice?.budget_max);
+      const noticeTrlMin = toNumberOrNull(notice?.trl_min);
+      const noticeTrlMax = toNumberOrNull(notice?.trl_max);
+      const budgetHint = parseBudgetFromQuestion(lastUserQuestion);
+      const hasBudgetQuestion = isBudgetQuestion(lastUserQuestion);
+      const hasTrlQuestion = isTrlQuestion(lastUserQuestion);
+      const needsBudgetFallback = hasBudgetQuestion && (noticeBudgetMin === null || noticeBudgetMax === null);
+      const needsTrlFallback = hasTrlQuestion && (noticeTrlMin === null || noticeTrlMax === null);
+
+      let inferredBudgetRange: { min: number | null; max: number | null } | null = null;
+      let inferredTrlRange: { min: number | null; max: number | null } | null = null;
+      let inferredContextUsed = false;
+
+      if (notice && (needsBudgetFallback || needsTrlFallback)) {
+        const { data: chunkRows } = await supabase
+          .from("document_chunks")
+          .select("content,documents!inner(file_name,notice_id)")
+          .eq("documents.notice_id", payload.noticeId)
+          .limit(240);
+
+        const rawChunks =
+          chunkRows?.map((row) => {
+            const documentsData = Array.isArray(row.documents) ? row.documents[0] : row.documents;
+            return {
+              content: row.content as string,
+              fileName: (documentsData?.file_name as string | undefined) ?? "arquivo"
+            };
+          }) ?? [];
+
+        const bestChunks = rankChunks(lastUserQuestion, rawChunks, 12);
+        const fallbackSource = [notice.summary ?? "", notice.description ?? "", ...bestChunks.map((chunk) => chunk.content)]
+          .filter(Boolean)
+          .join("\n\n");
+
+        if (needsBudgetFallback) {
+          inferredBudgetRange = extractBudgetRangeFromText(fallbackSource);
+        }
+        if (needsTrlFallback) {
+          inferredTrlRange = extractTrlRangeFromText(fallbackSource);
+        }
+        inferredContextUsed = Boolean(inferredBudgetRange || inferredTrlRange);
+      }
+
+      const effectiveBudgetMin = noticeBudgetMin ?? inferredBudgetRange?.min ?? null;
+      const effectiveBudgetMax = noticeBudgetMax ?? inferredBudgetRange?.max ?? null;
+      const effectiveTrlMin = noticeTrlMin ?? inferredTrlRange?.min ?? null;
+      const effectiveTrlMax = noticeTrlMax ?? inferredTrlRange?.max ?? null;
+      const budgetIsInferred = (noticeBudgetMin === null || noticeBudgetMax === null) && inferredBudgetRange !== null;
+      const trlIsInferred = (noticeTrlMin === null || noticeTrlMax === null) && inferredTrlRange !== null;
+
+      if (notice && (hasBudgetQuestion || hasTrlQuestion)) {
+        const budgetRangeLabel =
+          effectiveBudgetMin !== null || effectiveBudgetMax !== null
+            ? `${formatCurrencyBRL(effectiveBudgetMin)} a ${formatCurrencyBRL(effectiveBudgetMax)}`
+            : "nao informado no cadastro deste edital";
+        const trlRangeLabel =
+          effectiveTrlMin !== null || effectiveTrlMax !== null
+            ? `${effectiveTrlMin ?? "N/D"} a ${effectiveTrlMax ?? "N/D"}`
+            : "nao informado no cadastro deste edital";
+
+        let budgetFitMessage = "";
+        if (budgetHint !== null) {
+          if (effectiveBudgetMin !== null && effectiveBudgetMax !== null) {
+            budgetFitMessage =
+              budgetHint >= effectiveBudgetMin && budgetHint <= effectiveBudgetMax
+                ? `✅ **Sim**, um projeto de ${formatCurrencyBRL(budgetHint)} esta dentro da faixa cadastrada (${budgetRangeLabel}).`
+                : `⚠️ **Nao exatamente**: um projeto de ${formatCurrencyBRL(budgetHint)} fica fora da faixa cadastrada (${budgetRangeLabel}).`;
+            if (budgetIsInferred) {
+              budgetFitMessage += "\n\n⚠️ *Faixa inferida a partir do texto do edital (baixa confianca). Confirme no documento oficial.*";
+            }
+          } else {
+            budgetFitMessage = `⚠️ Nao consigo confirmar aderencia para ${formatCurrencyBRL(budgetHint)} porque a faixa de valor nao foi informada no cadastro.`;
+          }
+        }
+
+        if (budgetFitMessage || (hasBudgetQuestion && !hasTrlQuestion) || (hasTrlQuestion && !hasBudgetQuestion)) {
+          const directContent = [
+            `## Dados objetivos do edital`,
+            ``,
+            `- **Edital:** ${notice.title}`,
+            `- **Faixa de valor do projeto:** ${budgetRangeLabel}`,
+            `- **Faixa de TRL:** ${trlRangeLabel}`,
+            budgetIsInferred || trlIsInferred || inferredContextUsed
+              ? `- **Confianca:** baixa (faixa inferida por leitura textual, validar no edital oficial)`
+              : null,
+            notice.deadline_date ? `- **Prazo final:** ${notice.deadline_date}` : null,
+            notice.access_link ? `- **Link oficial:** ${notice.access_link}` : null,
+            ``,
+            budgetFitMessage || `Usei os dados estruturados cadastrados para responder com precisao.`
+          ]
+            .filter(Boolean)
+            .join("\n");
+
+          return NextResponse.json({ content: directContent, sources: ["dados do edital"] });
+        }
+      }
+
       let topChunks: Array<{ content: string; fileName: string }> = [];
 
       if (!hybridResult.error && hybridResult.data) {
@@ -336,7 +528,17 @@ export async function POST(request: Request) {
 
       ragContext = [
         notice
-          ? `Resumo do edital:\nTitulo: ${notice.title}\nResumo: ${notice.summary}\nDescricao: ${notice.description}\n`
+          ? `Dados estruturados do edital:
+Titulo: ${notice.title}
+Status: ${notice.status}
+Publicacao: ${notice.publish_date ?? "nao informado"}
+Prazo final: ${notice.deadline_date ?? "nao informado"}
+Link oficial: ${notice.access_link ?? "nao informado"}
+Faixa de valor do projeto: ${formatCurrencyBRL(noticeBudgetMin)} a ${formatCurrencyBRL(noticeBudgetMax)}
+Faixa de TRL: ${noticeTrlMin ?? "N/D"} a ${noticeTrlMax ?? "N/D"}
+Resumo: ${notice.summary ?? ""}
+Descricao: ${notice.description ?? ""}
+`
           : "",
         ...contexts.map((chunk) => `Trecho ${chunk.citation} (${chunk.fileName}):\n${chunk.content}`)
       ]

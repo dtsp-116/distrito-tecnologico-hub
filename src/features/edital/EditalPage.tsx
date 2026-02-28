@@ -27,7 +27,11 @@ export function EditalPage({ editalId, agencias, editais, topicos }: EditalPageP
   }
 
   const agencia = agencias.find((item) => item.id === edital.agenciaId);
-  const editalTopicos = topicos.filter((item) => edital.topicos.includes(item.id));
+  const editalTopicos = topicos.filter(
+    (item) =>
+      edital.topicos.includes(item.id) ||
+      edital.topicos.some((topico) => topico.toLowerCase() === item.nome.toLowerCase())
+  );
 
   return (
     <MainLayout agencias={agencias} activeAgencyId={edital.agenciaId} hasLeftChatRail>

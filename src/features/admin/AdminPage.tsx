@@ -489,6 +489,49 @@ export function AdminPage() {
                   <input type="date" value={editalForm.dataLimite} onChange={(event) => setEditalForm((prev) => ({ ...prev, dataLimite: event.target.value }))} className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" required />
                 </div>
 
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={editalForm.valorMinimo}
+                      onChange={(event) => setEditalForm((prev) => ({ ...prev, valorMinimo: event.target.value }))}
+                      className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                      placeholder="Valor min. (opcional)"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={editalForm.valorMaximo}
+                      onChange={(event) => setEditalForm((prev) => ({ ...prev, valorMaximo: event.target.value }))}
+                      className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                      placeholder="Valor max. (opcional)"
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="9"
+                      value={editalForm.trlMinimo}
+                      onChange={(event) => setEditalForm((prev) => ({ ...prev, trlMinimo: event.target.value }))}
+                      className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                      placeholder="TRL min. (1-9)"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="9"
+                      value={editalForm.trlMaximo}
+                      onChange={(event) => setEditalForm((prev) => ({ ...prev, trlMaximo: event.target.value }))}
+                      className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                      placeholder="TRL max. (1-9)"
+                    />
+                  </div>
+                </div>
+
                 <textarea value={editalForm.resumo} onChange={(event) => setEditalForm((prev) => ({ ...prev, resumo: event.target.value }))} className="min-h-20 w-full rounded-md border border-district-border bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" placeholder="Resumo curto" required />
                 <textarea value={editalForm.descricao} onChange={(event) => setEditalForm((prev) => ({ ...prev, descricao: event.target.value }))} className="min-h-28 w-full rounded-md border border-district-border bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" placeholder="Descricao completa" required />
 

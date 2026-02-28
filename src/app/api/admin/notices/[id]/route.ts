@@ -40,6 +40,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const payload = parsed.data;
+  if (
+    payload.valorMinimo !== undefined &&
+    payload.valorMinimo !== null &&
+    payload.valorMaximo !== undefined &&
+    payload.valorMaximo !== null &&
+    payload.valorMinimo > payload.valorMaximo
+  ) {
+    return NextResponse.json({ error: "Valor minimo nao pode ser maior que valor maximo." }, { status: 400 });
+  }
+
+  if (
+    payload.trlMinimo !== undefined &&
+    payload.trlMinimo !== null &&
+    payload.trlMaximo !== undefined &&
+    payload.trlMaximo !== null &&
+    payload.trlMinimo > payload.trlMaximo
+  ) {
+    return NextResponse.json({ error: "TRL minimo nao pode ser maior que TRL maximo." }, { status: 400 });
+  }
 
   const baseUpdate = {
     title: payload.nome.trim(),
