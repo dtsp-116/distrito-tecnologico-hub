@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  overflow-x: hidden;
+}
+
+html.dark body {
+  background: #030712;
+  color: #f3f4f6;
+}
+
+::selection {
+  background: rgba(200, 16, 46, 0.18);
+  color: inherit;
+}
