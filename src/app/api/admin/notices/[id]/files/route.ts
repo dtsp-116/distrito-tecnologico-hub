@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureAdmin } from "@/lib/auth/adminGuard";
-import { extractTextFromFile } from "@/lib/rag/extractText";
-import { chunkText } from "@/lib/rag/chunkText";
-import { generateEmbeddingsBatch, toPgVectorLiteral } from "@/lib/rag/embeddings";
+import { ingestNoticeFileRag } from "@/lib/rag/ingestNoticeFile";
 
 const STORAGE_BUCKET = "notice-files";
 
@@ -16,12 +14,15 @@ export async function GET(
   const { id: noticeId } = await params;
   const firstTry = await auth.supabase
     .from("notice_files")
-    .select("id,notice_id,file_name,display_name,size_bytes,created_at")
+    .select(
+      "id,notice_id,file_name,display_name,size_bytes,created_at,rag_status,rag_extraction_method,rag_extracted_char_count,rag_chunk_count,rag_last_error,rag_processed_at"
+    )
     .eq("notice_id", noticeId)
     .order("created_at", { ascending: false });
 
   const fallbackTry =
-    firstTry.error && firstTry.error.message.includes("display_name")
+    firstTry.error &&
+    (firstTry.error.message.includes("display_name") || firstTry.error.message.includes("rag_status"))
       ? await auth.supabase
           .from("notice_files")
           .select("id,notice_id,file_name,size_bytes,created_at")
@@ -36,17 +37,53 @@ export async function GET(
     display_name?: string | null;
     size_bytes: number;
     created_at: string;
+    rag_status?: "ready" | "empty" | "error" | null;
+    rag_extraction_method?: "text" | "ocr" | "unknown" | null;
+    rag_extracted_char_count?: number | null;
+    rag_chunk_count?: number | null;
+    rag_last_error?: string | null;
+    rag_processed_at?: string | null;
   }>;
 
+  // Reconcilia o status exibido com os chunks efetivamente persistidos.
+  const chunkRowsResult = await auth.supabase
+    .from("document_chunks")
+    .select("id,documents!inner(notice_file_id,notice_id)")
+    .eq("documents.notice_id", noticeId)
+    .limit(5000);
+  const chunkCountByFileId = new Map<string, number>();
+  if (!chunkRowsResult.error && chunkRowsResult.data) {
+    for (const row of chunkRowsResult.data as Array<{
+      documents: { notice_file_id?: string | null } | Array<{ notice_file_id?: string | null }>;
+    }>) {
+      const docData = Array.isArray(row.documents) ? row.documents[0] : row.documents;
+      const noticeFileId = docData?.notice_file_id;
+      if (!noticeFileId) continue;
+      chunkCountByFileId.set(noticeFileId, (chunkCountByFileId.get(noticeFileId) ?? 0) + 1);
+    }
+  }
+
   return NextResponse.json({
-    files: dataRows.map((row) => ({
-      id: row.id,
-      noticeId: row.notice_id,
-      fileName: row.file_name,
-      displayName: row.display_name ?? row.file_name,
-      sizeKb: Math.max(1, Math.round((row.size_bytes ?? 0) / 1024)),
-      createdAt: row.created_at
-    }))
+    files: dataRows.map((row) => {
+      const persistedChunks = chunkCountByFileId.get(row.id) ?? 0;
+      const effectiveChunkCount = Math.max(row.rag_chunk_count ?? 0, persistedChunks);
+      const effectiveStatus =
+        effectiveChunkCount > 0 ? "ready" : row.rag_status ?? "empty";
+      return {
+        id: row.id,
+        noticeId: row.notice_id,
+        fileName: row.file_name,
+        displayName: row.display_name ?? row.file_name,
+        sizeKb: Math.max(1, Math.round((row.size_bytes ?? 0) / 1024)),
+        createdAt: row.created_at,
+        ragStatus: effectiveStatus,
+        ragExtractionMethod: row.rag_extraction_method ?? "unknown",
+        ragExtractedCharCount: row.rag_extracted_char_count ?? 0,
+        ragChunkCount: effectiveChunkCount,
+        ragLastError: row.rag_last_error ?? null,
+        ragProcessedAt: row.rag_processed_at ?? null
+      };
+    })
   });
 }
 
@@ -111,7 +148,13 @@ export async function POST(
     display_name: item.display_name,
     mime_type: item.mime_type,
     size_bytes: item.size_bytes,
-    uploaded_by: auth.user.id
+    uploaded_by: auth.user.id,
+    rag_status: "empty",
+    rag_extraction_method: "unknown",
+    rag_extracted_char_count: 0,
+    rag_chunk_count: 0,
+    rag_last_error: null,
+    rag_processed_at: null
   }));
   const recordsFallback = recordsWithDisplayName.map((record) => ({
     id: record.id,
@@ -125,7 +168,8 @@ export async function POST(
 
   const firstInsert = await auth.supabase.from("notice_files").insert(recordsWithDisplayName);
   const fallbackInsert =
-    firstInsert.error && firstInsert.error.message.includes("display_name")
+    firstInsert.error &&
+    (firstInsert.error.message.includes("display_name") || firstInsert.error.message.includes("rag_status"))
       ? await auth.supabase.from("notice_files").insert(recordsFallback)
       : null;
   const metadataError = firstInsert.error && !fallbackInsert ? firstInsert.error : fallbackInsert?.error ?? null;
@@ -136,79 +180,16 @@ export async function POST(
 
   const ragWarnings: string[] = [];
   for (const upload of uploads) {
-    try {
-      const extractedText = await extractTextFromFile(upload.file_name, upload.mime_type, upload.bytes);
-      if (!extractedText) {
-        ragWarnings.push(`Arquivo ${upload.file_name} sem texto extraivel.`);
-        continue;
-      }
-
-      const { data: documentRow, error: documentError } = await auth.supabase
-        .from("documents")
-        .upsert(
-          {
-            notice_id: upload.notice_id,
-            notice_file_id: upload.id,
-            file_name: upload.file_name,
-            content_preview: extractedText.slice(0, 500),
-            status: "ready"
-          },
-          { onConflict: "notice_file_id" }
-        )
-        .select("id")
-        .single();
-
-      if (documentError || !documentRow) {
-        ragWarnings.push(`Falha ao registrar documento para ${upload.file_name}.`);
-        continue;
-      }
-
-      await auth.supabase.from("document_chunks").delete().eq("document_id", documentRow.id);
-
-      const chunks = chunkText(extractedText);
-      if (chunks.length === 0) {
-        ragWarnings.push(`Arquivo ${upload.file_name} sem conteudo util para chunks.`);
-        continue;
-      }
-
-      let chunkEmbeddings: number[][] = [];
-      if (process.env.OPENAI_API_KEY) {
-        try {
-          chunkEmbeddings = await generateEmbeddingsBatch(chunks.map((chunk) => chunk.content));
-        } catch {
-          ragWarnings.push(`Embeddings indisponiveis para ${upload.file_name}. Seguindo com FTS.`);
-        }
-      }
-
-      const chunksWithEmbedding = chunks.map((chunk, index) => ({
-        document_id: documentRow.id,
-        chunk_index: chunk.chunkIndex,
-        content: chunk.content,
-        token_count: chunk.tokenCount,
-        embedding: chunkEmbeddings[index] ? toPgVectorLiteral(chunkEmbeddings[index]) : null
-      }));
-      const chunksWithoutEmbedding = chunksWithEmbedding.map((chunk) => ({
-        document_id: chunk.document_id,
-        chunk_index: chunk.chunk_index,
-        content: chunk.content,
-        token_count: chunk.token_count
-      }));
-
-      const firstChunkInsert = await auth.supabase.from("document_chunks").insert(chunksWithEmbedding);
-      const fallbackChunkInsert =
-        firstChunkInsert.error &&
-        (firstChunkInsert.error.message.includes("embedding") ||
-          firstChunkInsert.error.message.includes("vector"))
-          ? await auth.supabase.from("document_chunks").insert(chunksWithoutEmbedding)
-          : null;
-      const chunksError =
-        firstChunkInsert.error && !fallbackChunkInsert ? firstChunkInsert.error : fallbackChunkInsert?.error ?? null;
-
-      if (chunksError) {
-        ragWarnings.push(`Falha ao salvar chunks para ${upload.file_name}.`);
-      }
-    } catch {
-      ragWarnings.push(`Falha inesperada no processamento RAG de ${upload.file_name}.`);
+    const ingestion = await ingestNoticeFileRag({
+      supabase: auth.supabase,
+      noticeId: upload.notice_id,
+      noticeFileId: upload.id,
+      fileName: upload.file_name,
+      mimeType: upload.mime_type,
+      bytes: upload.bytes
+    });
+    if (!ingestion.success && ingestion.warning) {
+      ragWarnings.push(ingestion.warning);
     }
   }
 

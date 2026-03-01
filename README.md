@@ -33,6 +33,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 GROQ_API_KEY=
 OPENAI_API_KEY=
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OCR_SPACE_API_KEY= # opcional, usado para OCR em PDF escaneado
 ```
 
 3. No SQL Editor do Supabase, execute os migrations na ordem:
@@ -43,6 +44,7 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small
    - `supabase/migrations/202602281900_rag_fts_search.sql`
    - `supabase/migrations/202602281930_rag_pgvector_hybrid.sql`
    - `supabase/migrations/202602282000_rag_settings.sql`
+   - `supabase/migrations/202603010900_rag_ingestion_observability.sql`
 4. Crie o primeiro usuario admin:
    - Cadastre um usuario pelo Auth do Supabase
    - No SQL Editor, rode:

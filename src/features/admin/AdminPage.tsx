@@ -23,6 +23,12 @@ interface NoticeFileRow {
   displayName: string;
   sizeKb: number;
   createdAt: string;
+  ragStatus: "ready" | "empty" | "error";
+  ragExtractionMethod: "text" | "ocr" | "unknown";
+  ragExtractedCharCount: number;
+  ragChunkCount: number;
+  ragLastError: string | null;
+  ragProcessedAt: string | null;
 }
 
 const FILES_PAGE_SIZE = 8;
@@ -60,6 +66,7 @@ export function AdminPage() {
     uploadFilesToEdital,
     renameNoticeFile,
     deleteNoticeFile,
+    reprocessNoticeFile,
     ragSettings,
     updateRagSettings
   } = useAdminPanel();
@@ -82,6 +89,8 @@ export function AdminPage() {
   const [feedback, setFeedback] = useState("");
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [reprocessingFileId, setReprocessingFileId] = useState<string | null>(null);
+  const [isBatchReprocessing, setIsBatchReprocessing] = useState(false);
   const [isSavingRagSettings, setIsSavingRagSettings] = useState(false);
   const [localRagLevel, setLocalRagLevel] = useState<"baixo" | "medio" | "alto">("medio");
   const [localLegacyFallback, setLocalLegacyFallback] = useState(true);
@@ -123,6 +132,13 @@ export function AdminPage() {
     if (!query) return noticeFiles;
     return noticeFiles.filter((file) => file.displayName.toLowerCase().includes(query) || file.fileName.toLowerCase().includes(query));
   }, [noticeFiles, noticeFileSearch]);
+
+  const problematicNoticeFiles = useMemo(() => {
+    return noticeFiles.filter((file) => {
+      const hasNoUsefulText = file.ragExtractedCharCount === 0 || file.ragExtractionMethod === "unknown";
+      return file.ragStatus !== "ready" && hasNoUsefulText;
+    });
+  }, [noticeFiles]);
 
   const totalFilesPages = Math.max(1, Math.ceil(filteredNoticeFiles.length / FILES_PAGE_SIZE));
   const paginatedFiles = useMemo(() => {
@@ -560,28 +576,103 @@ export function AdminPage() {
                   </form>
 
                   <div className="flex items-center justify-between gap-2">
-                    <input value={noticeFileSearch} onChange={(event) => { setNoticeFileSearch(event.target.value); setFilesPage(1); }} placeholder="Buscar arquivo..." className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 sm:max-w-xs" />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{filteredNoticeFiles.length} arquivo(s)</p>
+                    <div className="flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row">
+                      <input value={noticeFileSearch} onChange={(event) => { setNoticeFileSearch(event.target.value); setFilesPage(1); }} placeholder="Buscar arquivo..." className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" />
+                      <button
+                        type="button"
+                        disabled={isBatchReprocessing || problematicNoticeFiles.length === 0}
+                        onClick={async () => {
+                          if (!selectedNoticeId || problematicNoticeFiles.length === 0) return;
+                          setIsBatchReprocessing(true);
+                          try {
+                            for (const file of problematicNoticeFiles) {
+                              await reprocessNoticeFile(selectedNoticeId, file.id);
+                            }
+                            setNoticeFiles(await listNoticeFiles(selectedNoticeId));
+                            setFeedback(`Reprocessamento em lote concluido para ${problematicNoticeFiles.length} arquivo(s) problematico(s).`);
+                          } catch {
+                            setFeedback("Falha no reprocessamento em lote. Tente novamente.");
+                          } finally {
+                            setIsBatchReprocessing(false);
+                          }
+                        }}
+                        className="h-10 rounded-md border border-district-border px-3 text-xs font-semibold text-gray-700 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                        title="Reprocessa em lote os arquivos sem texto util para RAG"
+                      >
+                        {isBatchReprocessing ? "Reprocessando..." : `Reprocessar problematicos (${problematicNoticeFiles.length})`}
+                      </button>
+                    </div>
+                    <p className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">{filteredNoticeFiles.length} arquivo(s)</p>
                   </div>
 
                   <div className="overflow-x-auto rounded-md border border-district-border dark:border-gray-700">
                     <table className="min-w-full text-sm">
                       <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr><th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Nome</th><th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Tamanho</th><th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Acoes</th></tr>
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Nome</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">RAG</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Tamanho</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Acoes</th>
+                        </tr>
                       </thead>
                       <tbody>
                         {isFilesLoading ? (
-                          <tr><td colSpan={3} className="px-3 py-3 text-gray-500 dark:text-gray-400">Carregando arquivos...</td></tr>
+                          <tr><td colSpan={4} className="px-3 py-3 text-gray-500 dark:text-gray-400">Carregando arquivos...</td></tr>
                         ) : paginatedFiles.length === 0 ? (
-                          <tr><td colSpan={3} className="px-3 py-3 text-gray-500 dark:text-gray-400">Nenhum arquivo encontrado.</td></tr>
+                          <tr><td colSpan={4} className="px-3 py-3 text-gray-500 dark:text-gray-400">Nenhum arquivo encontrado.</td></tr>
                         ) : (
                           paginatedFiles.map((file) => (
                             <tr key={file.id} className="border-t border-district-border dark:border-gray-700">
-                              <td className="px-3 py-2 text-gray-800 dark:text-gray-200">{file.displayName}</td>
+                              <td className="px-3 py-2 text-gray-800 dark:text-gray-200">
+                                <p className="font-medium">{file.displayName}</p>
+                                {file.ragLastError ? (
+                                  <p className="mt-1 text-xs text-red-600 dark:text-red-300">{file.ragLastError}</p>
+                                ) : null}
+                              </td>
+                              <td className="px-3 py-2">
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                    file.ragStatus === "ready"
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+                                      : file.ragStatus === "error"
+                                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200"
+                                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
+                                  }`}
+                                >
+                                  {file.ragStatus === "ready" ? "OK" : file.ragStatus === "error" ? "Erro" : "Sem texto (OCR recomendado)"}
+                                </span>
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  {file.ragChunkCount} chunk(s) • {file.ragExtractedCharCount} chars • {file.ragExtractionMethod}
+                                </p>
+                                {file.ragStatus !== "ready" && (file.ragExtractedCharCount === 0 || file.ragExtractionMethod === "unknown") ? (
+                                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                                    OCR recomendado: texto nao extraido com qualidade para RAG.
+                                  </p>
+                                ) : null}
+                              </td>
                               <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{file.sizeKb} KB</td>
                               <td className="px-3 py-2">
                                 <div className="flex gap-2">
                                   <button type="button" onClick={async () => { const next = window.prompt("Novo nome de exibicao:", file.displayName); if (!next) return; await renameNoticeFile(selectedNoticeId, file.id, next); setNoticeFiles(await listNoticeFiles(selectedNoticeId)); }} className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200">Renomear</button>
+                                  <button
+                                    type="button"
+                                    disabled={reprocessingFileId === file.id}
+                                    onClick={async () => {
+                                      setReprocessingFileId(file.id);
+                                      try {
+                                        await reprocessNoticeFile(selectedNoticeId, file.id);
+                                        setNoticeFiles(await listNoticeFiles(selectedNoticeId));
+                                        setFeedback(`Arquivo ${file.displayName} reprocessado com sucesso.`);
+                                      } catch {
+                                        setFeedback(`Falha ao reprocessar ${file.displayName}.`);
+                                      } finally {
+                                        setReprocessingFileId(null);
+                                      }
+                                    }}
+                                    className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200"
+                                  >
+                                    {reprocessingFileId === file.id ? "Reprocessando..." : "Reprocessar"}
+                                  </button>
                                   <button type="button" onClick={async () => { if (!window.confirm(`Excluir ${file.displayName}?`)) return; await deleteNoticeFile(selectedNoticeId, file.id); setNoticeFiles(await listNoticeFiles(selectedNoticeId)); }} className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 dark:border-red-800 dark:text-red-300">Excluir</button>
                                 </div>
                               </td>

@@ -33,6 +33,12 @@ interface NoticeFileRow {
   displayName: string;
   sizeKb: number;
   createdAt: string;
+  ragStatus: "ready" | "empty" | "error";
+  ragExtractionMethod: "text" | "ocr" | "unknown";
+  ragExtractedCharCount: number;
+  ragChunkCount: number;
+  ragLastError: string | null;
+  ragProcessedAt: string | null;
 }
 
 interface UploadFileInput {
@@ -187,6 +193,13 @@ export function useAdminPanel() {
     await reload();
   };
 
+  const reprocessNoticeFile = async (editalId: string, fileId: string) => {
+    const response = await fetch(`/api/admin/notices/${editalId}/files/${fileId}/reprocess`, { method: "POST" });
+    if (!response.ok) {
+      throw new Error("Falha ao reprocessar arquivo.");
+    }
+  };
+
   const updateRagSettings = async (payload: RagSettings) => {
     const response = await fetch("/api/admin/rag-settings", {
       method: "PATCH",
@@ -215,6 +228,7 @@ export function useAdminPanel() {
     uploadFilesToEdital,
     renameNoticeFile,
     deleteNoticeFile,
+    reprocessNoticeFile,
     updateRagSettings,
     reload
   };

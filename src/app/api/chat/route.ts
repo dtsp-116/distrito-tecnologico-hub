@@ -67,6 +67,29 @@ function tokenize(text: string) {
     .filter((token) => token.length >= 3);
 }
 
+function expandQuestionForRetrieval(question: string) {
+  const normalized = question
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const expansions: string[] = [];
+
+  if (/(linha|linhas)\s+tematic/.test(normalized) || /\bsubtema/.test(normalized) || /\beixo/.test(normalized)) {
+    expansions.push("tema temas subtema subtemas eixo eixos area areas prioridade prioridades");
+  }
+  if (/document/.test(normalized) || /anexo/.test(normalized) || /comprovante/.test(normalized)) {
+    expansions.push("documentos obrigatorios anexos declaracao certidao comprovacao formulario");
+  }
+  if (/prazo|data limite|encerramento/.test(normalized)) {
+    expansions.push("prazo data limite cronograma submissao deadline");
+  }
+  if (/quem pode|elegibilidade|requisito/.test(normalized)) {
+    expansions.push("elegibilidade requisitos publico alvo proponente");
+  }
+
+  return [question, ...expansions].join(" ").trim();
+}
+
 function rankChunks(question: string, chunks: Array<{ content: string; fileName: string }>, topK = 6) {
   const tokens = tokenize(question);
   if (tokens.length === 0) return chunks.slice(0, topK);
@@ -382,9 +405,11 @@ export async function POST(request: Request) {
     }));
 
     const lastUserQuestion = [...incomingMessages].reverse().find((message) => message.role === "user")?.content ?? "";
+    const expandedQuestion = expandQuestionForRetrieval(lastUserQuestion);
     let ragContext = "";
     let ragSources: string[] = [];
     let hasRetrievedContext = false;
+    let lowConfidenceRetrieval = false;
     const supabase = await createSupabaseServerClient();
     const ragSettingsResult = await supabase
       .from("rag_settings")
@@ -413,7 +438,7 @@ export async function POST(request: Request) {
       }
 
       const queryEmbedding = process.env.OPENAI_API_KEY
-        ? await generateEmbedding(lastUserQuestion).catch(() => null)
+        ? await generateEmbedding(expandedQuestion).catch(() => null)
         : null;
 
       const [noticeResult, hybridResult] = await Promise.all([
@@ -424,7 +449,7 @@ export async function POST(request: Request) {
           .maybeSingle(),
         supabase.rpc("search_notice_chunks_hybrid", {
           p_notice_id: payload.noticeId,
-          p_query: lastUserQuestion,
+          p_query: expandedQuestion,
           p_query_embedding: queryEmbedding ? toPgVectorLiteral(queryEmbedding) : null,
           p_match_count: ragConfig.topK
         })
@@ -530,9 +555,11 @@ export async function POST(request: Request) {
       }
 
       let topChunks: Array<{ content: string; fileName: string }> = [];
+      let hybridRows: Array<{ content: string; file_name: string; rank?: number }> = [];
 
       if (!hybridResult.error && hybridResult.data) {
-        topChunks = (hybridResult.data as Array<{ content: string; file_name: string; rank?: number }>)
+        hybridRows = hybridResult.data as Array<{ content: string; file_name: string; rank?: number }>;
+        topChunks = hybridRows
           .filter((row) => {
             if (!lastUserQuestion.trim()) return true;
             if (typeof row.rank !== "number") return true;
@@ -544,10 +571,28 @@ export async function POST(request: Request) {
           }));
       }
 
+      if (topChunks.length < Math.min(2, ragConfig.topK) && useLegacyFallback && hybridRows.length > 0) {
+        const relaxedChunks = hybridRows
+          .filter((row) => {
+            if (!lastUserQuestion.trim()) return true;
+            if (typeof row.rank !== "number") return true;
+            return row.rank >= Math.max(0, ragConfig.minRank * 0.4);
+          })
+          .slice(0, ragConfig.topK)
+          .map((row) => ({
+            content: row.content,
+            fileName: row.file_name ?? "arquivo"
+          }));
+        if (relaxedChunks.length > topChunks.length) {
+          topChunks = relaxedChunks;
+          lowConfidenceRetrieval = true;
+        }
+      }
+
       if (topChunks.length === 0 && useLegacyFallback) {
         const ftsResult = await supabase.rpc("search_notice_chunks_fts", {
           p_notice_id: payload.noticeId,
-          p_query: lastUserQuestion,
+          p_query: expandedQuestion,
           p_match_count: ragConfig.topK
         });
 
@@ -556,6 +601,9 @@ export async function POST(request: Request) {
             content: row.content,
             fileName: row.file_name ?? "arquivo"
           }));
+          if (topChunks.length > 0) {
+            lowConfidenceRetrieval = true;
+          }
         }
       }
 
@@ -573,7 +621,14 @@ export async function POST(request: Request) {
               fileName: (documentsData?.file_name as string | undefined) ?? "arquivo"
             };
           }) ?? [];
-        topChunks = rankChunks(lastUserQuestion, rawChunks, 6);
+        topChunks = rankChunks(expandedQuestion, rawChunks, 8);
+        if (topChunks.length > 0) {
+          lowConfidenceRetrieval = true;
+        }
+        if (topChunks.length === 0 && rawChunks.length > 0) {
+          topChunks = rawChunks.slice(0, 4);
+          lowConfidenceRetrieval = true;
+        }
       }
 
       hasRetrievedContext = topChunks.length > 0;
@@ -602,6 +657,9 @@ Descricao: ${notice.description ?? ""}
       ]
         .filter(Boolean)
         .join("\n\n");
+      if (lowConfidenceRetrieval) {
+        ragContext = `Confianca da recuperacao: baixa (fallback lexical/relaxado usado).\n\n${ragContext}`;
+      }
     } else {
       const [noticesWithRanges, agenciesResult, noticeTagsResult, tagsResult] = await Promise.all([
         supabase
@@ -681,6 +739,19 @@ Descricao: ${notice.description ?? ""}
       }
     }
 
+    const retrievalGuidance = hasRetrievedContext
+      ? `Use estritamente o contexto recuperado quando ele existir.
+Se nao houver contexto suficiente para responder com seguranca, diga explicitamente.
+Sempre que possivel, cite de forma resumida os arquivos base da resposta.
+Ao usar o contexto RAG, adicione citacoes curtas no formato [1], [2] ao fim das frases principais.`
+      : `Quando nao houver contexto RAG suficiente, use um modo simples de assistente (sem inventar fatos), explicando que a resposta pode precisar de validacao no edital oficial.`;
+    const confidenceGuidance = lowConfidenceRetrieval
+      ? "Quando a recuperacao vier com confianca baixa, inclua um aviso claro de baixa confianca ao usuario."
+      : "";
+    const systemMessage = [buildSystemPrompt(payload.botName), retrievalGuidance, confidenceGuidance]
+      .filter(Boolean)
+      .join("\n");
+
     const response = await fetch(GROQ_ENDPOINT, {
       method: "POST",
       headers: {
@@ -693,13 +764,7 @@ Descricao: ${notice.description ?? ""}
         messages: [
           {
             role: "system",
-            content: `${buildSystemPrompt(payload.botName)}
-${hasRetrievedContext
-  ? `Use estritamente o contexto recuperado quando ele existir.
-Se nao houver contexto suficiente para responder com seguranca, diga explicitamente.
-Sempre que possivel, cite de forma resumida os arquivos base da resposta.
-Ao usar o contexto RAG, adicione citacoes curtas no formato [1], [2] ao fim das frases principais.`
-  : `Quando nao houver contexto RAG suficiente, use um modo simples de assistente (sem inventar fatos), explicando que a resposta pode precisar de validacao no edital oficial.`}`
+            content: systemMessage,
           },
           ...(ragContext ? [{ role: "system", content: `Contexto RAG:\n${ragContext}` }] : []),
           ...history
