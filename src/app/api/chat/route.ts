@@ -25,6 +25,8 @@ interface NoticeCandidate {
   deadlineDate: string;
   budgetMin: number | null;
   budgetMax: number | null;
+  trlMin: number | null;
+  trlMax: number | null;
   agencyName: string;
   tags: string[];
 }
@@ -214,7 +216,7 @@ function scoreNoticeCandidate(input: {
   budgetHint: number | null;
   trlHint: number | null;
 }) {
-  const { notice, questionTokens, budgetHint } = input;
+  const { notice, questionTokens, budgetHint, trlHint } = input;
   const searchable = [
     notice.title,
     notice.summary,
@@ -238,8 +240,14 @@ function scoreNoticeCandidate(input: {
   const statusScore = notice.status === "aberto" ? 1.2 : notice.status === "em_breve" ? 0.5 : -1;
   const deadlineScore = isFutureDate(notice.deadlineDate) ? 0.7 : -0.6;
 
-  // Fase A: TRL ainda nao e critico no score global, mas ja fica preparado para evolucao.
-  const trlScore = input.trlHint !== null ? 0.1 : 0;
+  let trlScore = 0;
+  if (trlHint !== null && notice.trlMin !== null && notice.trlMax !== null) {
+    if (trlHint >= notice.trlMin && trlHint <= notice.trlMax) trlScore = 1.4;
+    else if (trlHint >= notice.trlMin - 1 && trlHint <= notice.trlMax + 1) trlScore = 0.5;
+    else trlScore = -0.5;
+  } else if (trlHint !== null) {
+    trlScore = -0.1;
+  }
 
   const total = themeScore + budgetScore + statusScore + deadlineScore + trlScore;
   return { total, matchedTokens };
@@ -249,13 +257,15 @@ function buildGlobalRecommendationContext(params: {
   notices: NoticeCandidate[];
   question: string;
   searchLevel: RagSearchLevel;
+  useLegacyFallback: boolean;
 }) {
   const budgetHint = parseBudgetFromQuestion(params.question);
   const trlHint = parseTrlFromQuestion(params.question);
   const tokens = tokenize(params.question).filter((token) => token.length >= 4);
   const levelTopK = params.searchLevel === "baixo" ? 3 : params.searchLevel === "alto" ? 6 : 4;
+  const rankingCutoff = params.searchLevel === "alto" ? -0.1 : params.searchLevel === "medio" ? 0 : 0.2;
 
-  const ranked = params.notices
+  let ranked = params.notices
     .map((notice) => {
       const { total, matchedTokens } = scoreNoticeCandidate({
         notice,
@@ -267,7 +277,49 @@ function buildGlobalRecommendationContext(params: {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, levelTopK)
-    .filter((item) => item.score > 0.2);
+    .filter((item) => item.score > rankingCutoff);
+
+  if (ranked.length === 0 && params.useLegacyFallback) {
+    const lexical = params.notices
+      .map((notice) => {
+        const searchable = [notice.title, notice.summary, notice.description, notice.agencyName, ...notice.tags]
+          .join(" ")
+          .toLowerCase();
+        const tokenHits = tokens.reduce((acc, token) => acc + (searchable.includes(token) ? 1 : 0), 0);
+        const budgetMatch =
+          budgetHint !== null && notice.budgetMin !== null && notice.budgetMax !== null
+            ? budgetHint >= notice.budgetMin && budgetHint <= notice.budgetMax
+              ? 2
+              : 0
+            : 0;
+        const trlMatch =
+          trlHint !== null && notice.trlMin !== null && notice.trlMax !== null
+            ? trlHint >= notice.trlMin && trlHint <= notice.trlMax
+              ? 1.2
+              : 0
+            : 0;
+        const statusBoost = notice.status === "aberto" ? 0.6 : 0;
+        return {
+          notice,
+          score: tokenHits * 0.8 + budgetMatch + trlMatch + statusBoost,
+          matchedTokens: tokens.filter((token) => searchable.includes(token))
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .filter((item) => item.score > 0)
+      .slice(0, levelTopK);
+
+    ranked = lexical;
+  }
+
+  if (ranked.length === 0 && params.useLegacyFallback) {
+    const openNotices = params.notices
+      .filter((notice) => notice.status === "aberto")
+      .sort((a, b) => new Date(a.deadlineDate).getTime() - new Date(b.deadlineDate).getTime())
+      .slice(0, Math.max(3, levelTopK - 1))
+      .map((notice) => ({ notice, score: 0.1, matchedTokens: [] as string[] }));
+    ranked = openNotices;
+  }
 
   if (ranked.length === 0) return { context: "", sources: [] as string[], hasContext: false };
 
@@ -277,9 +329,14 @@ function buildGlobalRecommendationContext(params: {
         item.notice.budgetMin !== null || item.notice.budgetMax !== null
           ? `${formatCurrencyBRL(item.notice.budgetMin)} a ${formatCurrencyBRL(item.notice.budgetMax)}`
           : "nao informado";
+      const trlLabel =
+        item.notice.trlMin !== null || item.notice.trlMax !== null
+          ? `${item.notice.trlMin ?? "N/D"} a ${item.notice.trlMax ?? "N/D"}`
+          : "nao informado";
       const reasons: string[] = [];
       if (item.matchedTokens.length > 0) reasons.push(`tema: ${item.matchedTokens.slice(0, 4).join(", ")}`);
       if (budgetHint !== null) reasons.push(`projeto informado: ${formatCurrencyBRL(budgetHint)}`);
+      if (trlHint !== null) reasons.push(`trl informado: ${trlHint}`);
       reasons.push(`status: ${item.notice.status}`);
       return `Candidato ${index + 1}
 ID: ${item.notice.id}
@@ -288,6 +345,7 @@ Agencia: ${item.notice.agencyName}
 Status: ${item.notice.status}
 Prazo: ${item.notice.deadlineDate}
 Faixa de valor: ${budgetLabel}
+Faixa de TRL: ${trlLabel}
 Tags: ${item.notice.tags.join(", ") || "sem tags"}
 Resumo: ${clipText(item.notice.summary || item.notice.description, 500)}
 Motivos de aderencia: ${reasons.join(" | ")}
@@ -548,7 +606,7 @@ Descricao: ${notice.description ?? ""}
       const [noticesWithRanges, agenciesResult, noticeTagsResult, tagsResult] = await Promise.all([
         supabase
           .from("notices")
-          .select("id,title,summary,description,status,deadline_date,budget_min,budget_max,agency_id"),
+          .select("id,title,summary,description,status,deadline_date,budget_min,budget_max,trl_min,trl_max,agency_id"),
         supabase.from("agencies").select("id,name"),
         supabase.from("notice_tags").select("notice_id,tag_id"),
         supabase.from("tags").select("id,name")
@@ -570,6 +628,8 @@ Descricao: ${notice.description ?? ""}
         deadline_date: string;
         budget_min?: number | string | null;
         budget_max?: number | string | null;
+        trl_min?: number | string | null;
+        trl_max?: number | string | null;
         agency_id?: string | null;
       }>;
 
@@ -603,6 +663,8 @@ Descricao: ${notice.description ?? ""}
           deadlineDate: notice.deadline_date,
           budgetMin: toNumberOrNull(notice.budget_min),
           budgetMax: toNumberOrNull(notice.budget_max),
+          trlMin: toNumberOrNull(notice.trl_min),
+          trlMax: toNumberOrNull(notice.trl_max),
           agencyName: agencyNameById.get(notice.agency_id ?? "") ?? "Agencia",
           tags: tagsByNotice.get(notice.id) ?? []
         }));
@@ -610,7 +672,8 @@ Descricao: ${notice.description ?? ""}
         const global = buildGlobalRecommendationContext({
           notices: noticeCandidates,
           question: lastUserQuestion,
-          searchLevel
+          searchLevel,
+          useLegacyFallback
         });
         ragContext = global.context;
         ragSources = global.sources;
