@@ -56,7 +56,7 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
 
   return (
     <MainLayout agencias={agencias} showGeneralChat hasLeftChatRail>
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         <section className="rounded-mdx border border-district-border bg-white p-3 shadow-card dark:border-gray-700 dark:bg-gray-900 sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -73,14 +73,14 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
               Limpar filtros
             </button>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
-            <span className="rounded-full border border-district-border bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <div className="mt-2 flex flex-wrap gap-1.5 sm:hidden">
+            <span className="rounded-full border border-district-border bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
               Total: {editais.length}
             </span>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
               Abertos: {abertoCount}
             </span>
-            <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+            <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
               Encerrados: {encerradoCount}
             </span>
           </div>
@@ -109,9 +109,7 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
             <span>Filtros e busca</span>
             <span>{isMobileFiltersOpen ? "Ocultar" : "Mostrar"}</span>
           </button>
-          {(termoBusca || agenciaId || status || topicoId) && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Filtros ativos aplicados.</p>
-          )}
+          {(termoBusca || agenciaId || status || topicoId) && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Filtros ativos.</p>}
         </section>
 
         <div className={`${isMobileFiltersOpen ? "block" : "hidden"} md:block`}>
@@ -152,7 +150,7 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
             </p>
           </section>
         ) : (
-          <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+          <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 2xl:grid-cols-3">
             {filtrados.map((edital) => (
               <CardEdital
                 key={edital.id}

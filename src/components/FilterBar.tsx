@@ -29,13 +29,13 @@ export function FilterBar({
   onTopicoChange
 }: FilterBarProps) {
   return (
-    <section className="grid gap-3 rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:grid-cols-3">
+    <section className="grid gap-2.5 rounded-mdx border border-district-border bg-white p-3 shadow-card dark:border-gray-700 dark:bg-gray-900 sm:gap-3 sm:p-4 md:grid-cols-3">
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Agencia</span>
         <select
           value={selectedAgencia}
           onChange={(event) => onAgenciaChange(event.target.value)}
-          className="h-11 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+          className="h-10 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 sm:h-11"
           aria-label="Filtro por agencia"
         >
           <option value="">Todas as agencias</option>
@@ -52,7 +52,7 @@ export function FilterBar({
         <select
           value={selectedStatus}
           onChange={(event) => onStatusChange(event.target.value as EditalStatus | "")}
-          className="h-11 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+          className="h-10 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 sm:h-11"
           aria-label="Filtro por status"
         >
           <option value="">Todos os status</option>
@@ -69,7 +69,7 @@ export function FilterBar({
         <select
           value={selectedTopico}
           onChange={(event) => onTopicoChange(event.target.value)}
-          className="h-11 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+          className="h-10 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 sm:h-11"
           aria-label="Filtro por topicos"
         >
           <option value="">Todos os topicos</option>

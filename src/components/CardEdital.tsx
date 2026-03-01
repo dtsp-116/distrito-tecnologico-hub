@@ -16,9 +16,9 @@ export function CardEdital({ edital, agencia, topicos }: CardEditalProps) {
       aria-label={`Abrir detalhes do edital ${edital.nome}`}
       className="group block h-full min-w-0 rounded-mdx focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
     >
-      <article className="flex h-full flex-col gap-4 rounded-mdx border border-district-border bg-white p-4 shadow-card transition group-hover:-translate-y-1 group-hover:shadow-lg dark:border-gray-700 dark:bg-gray-900">
+      <article className="flex h-full flex-col gap-3 rounded-mdx border border-district-border bg-white p-3.5 shadow-card transition group-hover:-translate-y-1 group-hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 sm:gap-4 sm:p-4">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="break-words text-base font-semibold text-gray-900 dark:text-gray-100">{edital.nome}</h3>
+          <h3 className="break-words text-[1.05rem] font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-base">{edital.nome}</h3>
           <BadgeStatus status={edital.status} />
         </div>
 
@@ -34,7 +34,7 @@ export function CardEdital({ edital, agencia, topicos }: CardEditalProps) {
           </p>
         </div>
 
-        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{edital.resumo}</p>
+        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 break-words">{edital.resumo}</p>
 
         <div className="flex flex-wrap gap-2">
           {topicos.map((topico) => (

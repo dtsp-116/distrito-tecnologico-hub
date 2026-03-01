@@ -182,7 +182,7 @@ export function FloatingChat({
       )}
 
       {isOpen && (
-        <section className="fixed bottom-20 right-4 z-40 flex h-[68dvh] w-[calc(100%-2rem)] max-w-sm flex-col rounded-mdx border border-district-border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 md:bottom-24 md:right-6 lg:hidden">
+        <section className="fixed bottom-20 right-4 z-40 flex h-[70dvh] w-[calc(100%-1.25rem)] max-w-sm flex-col rounded-mdx border border-district-border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 md:bottom-24 md:right-6 lg:hidden">
           <header className="flex items-center justify-between border-b border-district-border px-4 py-3 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
             <button
@@ -197,7 +197,7 @@ export function FloatingChat({
             </button>
           </header>
 
-          <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+          <div ref={containerRef} className="flex-1 space-y-2.5 overflow-y-auto p-3.5">
             {messages.length === 0 ? (
               <p className="rounded-md border border-dashed border-district-border p-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                 {emptyStateMessage}
@@ -245,16 +245,16 @@ export function FloatingChat({
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-district-border p-3 dark:border-gray-700">
+          <form onSubmit={handleSubmit} className="border-t border-district-border p-2.5 dark:border-gray-700">
             {contextualQuickActions.length > 0 && (
-              <div className="mb-2 flex flex-wrap gap-2">
+              <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
                 {contextualQuickActions.map((action) => (
                   <button
                     key={action}
                     type="button"
                     onClick={() => sendMessage(action)}
                     disabled={isReplying}
-                    className="rounded-full border border-district-border px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="whitespace-nowrap rounded-full border border-district-border px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
                     {action}
                   </button>

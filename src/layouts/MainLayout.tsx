@@ -45,7 +45,7 @@ export function MainLayout({
       </DrawerMobile>
 
       <main
-        className={`mx-auto w-full max-w-[1700px] px-4 pb-28 pt-28 md:px-6 md:pb-8 md:pt-24 ${
+        className={`mx-auto w-full max-w-[1700px] px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-20 sm:px-4 md:px-6 md:pb-8 md:pt-24 ${
           isDesktopNavCollapsed ? "lg:pl-[90px]" : "lg:pl-[350px]"
         } ${hasLeftChatRail ? "lg:pr-[360px]" : ""}`}
       >
