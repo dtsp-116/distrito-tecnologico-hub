@@ -157,6 +157,14 @@ export function FapiPage({ agencias }: FapiPageProps) {
               >
                 {isAnalyzing ? "Analisando FAPI..." : "Iniciar analise tecnica"}
               </button>
+              {isAnalyzing && (
+                <div className="mt-3 flex flex-col items-center gap-2 text-xs text-subtle" aria-live="polite">
+                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-[color:var(--primary-soft)] border-t-[color:var(--primary)]" />
+                  <p className="text-[color:var(--text-primary)]">
+                    Estamos lendo a sua FAPI com cuidado. Isso pode levar alguns segundos.
+                  </p>
+                </div>
+              )}
             </form>
           ) : (
             <>

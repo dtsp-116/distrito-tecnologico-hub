@@ -19,6 +19,7 @@ Analise a FAPI considerando:
 - Regras gerais do SENAI
 - Regras da agencia selecionada
 - Regras especificas do edital (quando aplicavel)
+- Foco principal em: titulo do projeto, objetivo, contexto, escopo, inovacao e avancos de TRL.
 
 Seja tecnico, rigoroso e construtivo.
 Nunca invente informacao ausente.
@@ -40,18 +41,18 @@ Estruture a resposta em Markdown com as secoes obrigatorias abaixo:
 3) Pontos a melhorar (com motivo)
 4) Ajustes obrigatorios (com motivo)
 5) Melhorias recomendadas (com motivo)
-6) Riscos de reprovacao
-7) Avaliacao da clareza do problema
-8) Avaliacao da solucao proposta
-9) Avaliacao do TRL
-10) Aderencia estrategica ao edital
-11) Insight geral (curto)
+6) Avaliacao da clareza do problema
+7) Avaliacao da solucao proposta
+8) Avaliacao do TRL
+9) Aderencia estrategica ao edital
+10) Insight geral (curto)
 
 Regras extras obrigatorias:
-- Em "Pontos a melhorar (com motivo)", use lista e em cada item inclua:
+- Em "Pontos a melhorar (com motivo)", de especial foco em titulo, objetivo, contexto, escopo, inovacao e TRL e use lista em que cada item inclua:
   - Ponto observado;
   - Impacto/risco (por que isso importa);
-  - Acao sugerida.
+  - Acao sugerida;
+  - Uma sugestao de texto exemplo (1 a 3 frases ou um pequeno paragrafo) que o usuario possa adaptar e colar na FAPI.
 - Em "Insight geral (curto)", escreva 1 ou 2 frases objetivas e praticas.
 - Quando faltar dado, explicite o dado ausente dentro dos pontos de melhoria.
 `.trim();
