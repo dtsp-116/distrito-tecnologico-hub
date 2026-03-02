@@ -45,6 +45,7 @@ OCR_SPACE_API_KEY= # opcional, usado para OCR em PDF escaneado
    - `supabase/migrations/202602281930_rag_pgvector_hybrid.sql`
    - `supabase/migrations/202602282000_rag_settings.sql`
    - `supabase/migrations/202603010900_rag_ingestion_observability.sql`
+   - `supabase/migrations/202603021000_fapi_rules_metrics.sql`
 4. Crie o primeiro usuario admin:
    - Cadastre um usuario pelo Auth do Supabase
    - No SQL Editor, rode:
@@ -56,6 +57,12 @@ where id = 'UUID_DO_USUARIO';
 ```
 
 5. Reinicie o projeto (`npm run dev`).
+
+## Modulo Analise de FAPI
+
+- Rota principal: `/fapi` (chat full screen com upload efemero de PDF/imagem).
+- Politica de dados: o arquivo e texto da FAPI sao processados em memoria e nao sao persistidos em banco/storage.
+- Admin: gestao de regras em `/admin/fapi-rules`.
 
 ### Fluxo de login
 

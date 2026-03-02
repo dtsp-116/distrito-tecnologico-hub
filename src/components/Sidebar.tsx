@@ -21,6 +21,8 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const isProfileRoute = pathname?.startsWith("/perfil");
+  const isFapiRoute = pathname?.startsWith("/fapi");
+  const isAdminRulesRoute = pathname?.startsWith("/admin/fapi-rules");
 
   return (
     <aside className="h-full overflow-y-auto rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
@@ -37,6 +39,17 @@ export function Sidebar({
         >
           Todos os editais
         </Link>
+        <Link
+          href="/fapi"
+          onClick={onNavigate}
+          className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+            isFapiRoute
+              ? "bg-red-50 text-district-red dark:bg-red-950/40"
+              : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+          }`}
+        >
+          Analise de FAPI
+        </Link>
         {canViewAdmin && (
           <Link
             href="/admin"
@@ -48,6 +61,19 @@ export function Sidebar({
             }`}
           >
             Painel Admin
+          </Link>
+        )}
+        {canViewAdmin && (
+          <Link
+            href="/admin/fapi-rules"
+            onClick={onNavigate}
+            className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+              isAdminRulesRoute
+                ? "bg-red-50 text-district-red dark:bg-red-950/40"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            }`}
+          >
+            Regras FAPI
           </Link>
         )}
         <Link

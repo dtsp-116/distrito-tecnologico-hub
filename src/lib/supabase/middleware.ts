@@ -29,6 +29,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = pathname === "/login" || pathname === "/cadastro";
   const requiresAuth =
     pathname === "/hub" ||
+    pathname.startsWith("/fapi") ||
     pathname.startsWith("/agencia") ||
     pathname.startsWith("/edital") ||
     pathname.startsWith("/admin");
