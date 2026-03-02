@@ -5,14 +5,14 @@ interface SearchInputProps {
 
 export function SearchInput({ value, onChange }: SearchInputProps) {
   return (
-    <label className="flex w-full flex-col gap-1 rounded-mdx border border-district-border bg-white p-2.5 shadow-card dark:border-gray-700 dark:bg-gray-900 sm:p-3">
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Buscar editais</span>
+    <label className="panel flex w-full flex-col gap-1.5 p-3 sm:p-4">
+      <span className="text-sm font-semibold text-[color:var(--text-primary)]">Buscar editais</span>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         type="search"
         placeholder="Digite nome, agencia ou topico"
-        className="h-10 w-full min-w-0 rounded-mdx border border-district-border bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 sm:h-11"
+        className="input-base min-w-0"
         aria-label="Campo de busca de editais"
       />
     </label>

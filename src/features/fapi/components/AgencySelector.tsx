@@ -11,13 +11,13 @@ interface AgencySelectorProps {
 export function AgencySelector({ agencies, value, onChange }: AgencySelectorProps) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <span className="text-subtle text-xs font-semibold uppercase tracking-wide">
         Agencia FAPI (opcional)
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-800 outline-none focus:border-district-red dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+        className="input-base h-10"
       >
         <option value="">Selecionar agencia</option>
         {agencies.map((agency) => (

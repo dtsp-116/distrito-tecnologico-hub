@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { DrawerMobile } from "@/components/DrawerMobile";
 import { FloatingChat } from "@/components/FloatingChat";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 
 interface MainLayoutProps {
@@ -31,7 +32,7 @@ export function MainLayout({
   const canViewAdmin = role === "admin";
 
   return (
-    <div className="min-h-screen bg-district-light dark:bg-gray-950">
+    <div className="min-h-screen">
       <Header onMenuClick={() => setIsDrawerOpen(true)} />
 
       <DrawerMobile title="Navegacao" isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
@@ -45,7 +46,7 @@ export function MainLayout({
       </DrawerMobile>
 
       <main
-        className={`mx-auto w-full max-w-[1700px] px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-20 sm:px-4 md:px-6 md:pb-8 md:pt-24 ${
+        className={`page-container w-full px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-20 sm:px-4 md:px-6 md:pb-8 md:pt-24 ${
           isDesktopNavCollapsed ? "lg:pl-[90px]" : "lg:pl-[350px]"
         } ${hasLeftChatRail ? "lg:pr-[360px]" : ""}`}
       >
@@ -57,18 +58,18 @@ export function MainLayout({
           isDesktopNavCollapsed ? "w-14" : "w-[320px]"
         }`}
       >
-        <div className="flex h-full flex-col rounded-mdx border border-district-border bg-white p-2 shadow-card dark:border-gray-700 dark:bg-gray-900">
+        <div className="panel flex h-full flex-col overflow-hidden p-2">
           <div className="mb-2 flex items-center justify-between">
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-subtle">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
               </svg>
               {!isDesktopNavCollapsed && "Menu"}
             </p>
-            <button
-              type="button"
+            <ButtonBase
+              variant="secondary"
               onClick={() => setIsDesktopNavCollapsed((value) => !value)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-district-border text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="h-8 w-8 px-0"
               aria-label={isDesktopNavCollapsed ? "Expandir navegacao" : "Recolher navegacao"}
             >
               {isDesktopNavCollapsed ? (
@@ -80,7 +81,7 @@ export function MainLayout({
                   <path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-            </button>
+            </ButtonBase>
           </div>
           {!isDesktopNavCollapsed && (
             <Sidebar

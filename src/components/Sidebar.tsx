@@ -23,43 +23,50 @@ export function Sidebar({
   const isProfileRoute = pathname?.startsWith("/perfil");
   const isFapiRoute = pathname?.startsWith("/fapi");
   const isAdminRulesRoute = pathname?.startsWith("/admin/fapi-rules");
+  const linkBaseClass =
+    "group flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition duration-200";
+  const linkIdleClass = "text-[color:var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[color:var(--text-primary)]";
+  const linkActiveClass = "bg-[var(--primary-soft)] text-[color:var(--primary)]";
 
   return (
-    <aside className="h-full overflow-y-auto rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Navegacao</h2>
+    <aside className="h-full overflow-y-auto rounded-2xl p-4">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-subtle">Navegacao</h2>
       <nav aria-label="Menu lateral de agencias" className="space-y-2">
         <Link
           href="/hub"
           onClick={onNavigate}
-          className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+          className={`${linkBaseClass} ${
             !isAdminRoute && !activeAgencyId
-              ? "bg-red-50 text-district-red dark:bg-red-950/40"
-              : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              ? linkActiveClass
+              : linkIdleClass
           }`}
         >
+          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
           Todos os editais
         </Link>
         <Link
           href="/fapi"
           onClick={onNavigate}
-          className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+          className={`${linkBaseClass} ${
             isFapiRoute
-              ? "bg-red-50 text-district-red dark:bg-red-950/40"
-              : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              ? linkActiveClass
+              : linkIdleClass
           }`}
         >
+          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
           Analise de FAPI
         </Link>
         {canViewAdmin && (
           <Link
             href="/admin"
             onClick={onNavigate}
-            className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+            className={`${linkBaseClass} ${
               isAdminRoute
-                ? "bg-red-50 text-district-red dark:bg-red-950/40"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                ? linkActiveClass
+                : linkIdleClass
             }`}
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
             Painel Admin
           </Link>
         )}
@@ -67,39 +74,41 @@ export function Sidebar({
           <Link
             href="/admin/fapi-rules"
             onClick={onNavigate}
-            className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+            className={`${linkBaseClass} ${
               isAdminRulesRoute
-                ? "bg-red-50 text-district-red dark:bg-red-950/40"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                ? linkActiveClass
+                : linkIdleClass
             }`}
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
             Regras FAPI
           </Link>
         )}
         <Link
           href="/perfil"
           onClick={onNavigate}
-          className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+          className={`${linkBaseClass} ${
             isProfileRoute
-              ? "bg-red-50 text-district-red dark:bg-red-950/40"
-              : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              ? linkActiveClass
+              : linkIdleClass
           }`}
         >
+          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
           Meu perfil
         </Link>
       </nav>
 
-      <h2 className="mb-3 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Agencias</h2>
+      <h2 className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-subtle">Agencias</h2>
       <nav aria-label="Lista de agencias" className="space-y-2">
         {agencias.map((agencia) => (
           <Link
             href={`/agencia/${agencia.id}`}
             onClick={onNavigate}
             key={agencia.id}
-            className={`block rounded-md px-3 py-2 text-sm font-medium transition ${
+            className={`${linkBaseClass} ${
               activeAgencyId === agencia.id
-                ? "bg-red-50 text-district-red dark:bg-red-950/40"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                ? linkActiveClass
+                : linkIdleClass
             }`}
           >
             {agencia.sigla}

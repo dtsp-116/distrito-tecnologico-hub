@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DistrictLogo } from "@/components/DistrictLogo";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface HeaderProps {
@@ -20,31 +21,32 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-district-border bg-white/95 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/95">
-      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-3 px-4 md:px-6">
+    <header className="fixed inset-x-0 top-0 z-40 border-b backdrop-blur" style={{ borderColor: "var(--border-color)", background: "color-mix(in srgb, var(--bg-elevated) 92%, transparent)" }}>
+      <div className="page-container flex h-16 items-center justify-between gap-3 px-4 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <button
+          <ButtonBase
+            variant="secondary"
             onClick={onMenuClick}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-district-border text-gray-700 dark:border-gray-700 dark:text-gray-100 md:hidden"
+            className="h-10 w-10 px-0 md:hidden"
             aria-label="Abrir menu de navegacao"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
             </svg>
-          </button>
+          </ButtonBase>
           <DistrictLogo />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <p className="truncate text-sm font-semibold text-[color:var(--text-primary)]">
               Distrito Tecnologico Hub
             </p>
-            <p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block">Hub Inteligente de Editais</p>
+            <p className="text-subtle hidden text-xs sm:block">Hub Inteligente de Editais</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             href="/perfil"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-district-border text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+            className="btn-base btn-secondary h-10 w-10 px-0"
             aria-label="Abrir perfil"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -55,7 +57,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <button
             type="button"
             onClick={handleSignOut}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-district-border text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+            className="btn-base btn-secondary h-10 w-10 px-0"
             aria-label="Sair da conta"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">

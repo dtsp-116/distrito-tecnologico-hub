@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MensagemChat } from "@/types";
 import { useChat } from "@/hooks/useChat";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 
 interface FloatingChatProps {
   title: string;
@@ -72,19 +73,20 @@ export function FloatingChat({
             isDesktopCollapsed ? "w-16" : "w-[320px]"
           }`}
         >
-          <section className="flex w-full flex-col rounded-mdx border border-district-border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
-            <header className="flex items-center justify-between border-b border-district-border px-3 py-2 dark:border-gray-700">
-              <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <section className="panel flex w-full flex-col overflow-hidden">
+            <header className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: "var(--border-color)" }}>
+              <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--text-primary)]">
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M8 10h8M8 14h5" strokeLinecap="round" />
                   <path d="M5 19V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 2z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {!isDesktopCollapsed && title}
               </h3>
-              <button
+              <ButtonBase
                 type="button"
+                variant="secondary"
                 onClick={() => setIsDesktopCollapsed((value) => !value)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-district-border text-gray-700 dark:border-gray-700 dark:text-gray-100"
+                className="h-8 w-8 px-0"
                 aria-label={isDesktopCollapsed ? `Expandir ${title}` : `Recolher ${title}`}
               >
                 {isDesktopCollapsed ? (
@@ -96,24 +98,24 @@ export function FloatingChat({
                     <path d={desktopDockedSide === "right" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
-              </button>
+              </ButtonBase>
             </header>
 
             {!isDesktopCollapsed && (
               <>
                 <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
                   {messages.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-district-border p-3 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    <p className="rounded-lg border border-dashed border-[var(--border-color)] p-3 text-sm text-subtle">
                       {emptyStateMessage}
                     </p>
                   ) : (
                     messages.map((message) => (
-                      <article key={message.id} className="rounded-md bg-gray-50 p-3 dark:bg-gray-800">
+                      <article key={message.id} className="panel-muted p-3">
                         <div className="mb-1 flex items-center justify-between gap-2">
-                          <strong className="text-xs text-gray-800 dark:text-gray-100">{message.usuario}</strong>
-                          <span className="text-[11px] text-gray-500 dark:text-gray-400">{message.horario}</span>
+                          <strong className="text-xs text-[color:var(--text-primary)]">{message.usuario}</strong>
+                          <span className="text-subtle text-[11px]">{message.horario}</span>
                         </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <div className="text-sm text-subtle">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
@@ -125,7 +127,7 @@ export function FloatingChat({
                               ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5">{children}</ol>,
                               li: ({ children }) => <li>{children}</li>,
                               strong: ({ children }) => (
-                                <strong className="font-semibold text-gray-800 dark:text-gray-100">{children}</strong>
+                                <strong className="font-semibold text-[color:var(--text-primary)]">{children}</strong>
                               )
                             }}
                           >
@@ -142,7 +144,7 @@ export function FloatingChat({
                   )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="border-t border-district-border p-3 dark:border-gray-700">
+                <form onSubmit={handleSubmit} className="border-t p-3" style={{ borderColor: "var(--border-color)" }}>
                   {contextualQuickActions.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-2">
                       {contextualQuickActions.map((action) => (
@@ -151,7 +153,7 @@ export function FloatingChat({
                           type="button"
                           onClick={() => sendMessage(action)}
                           disabled={isReplying}
-                          className="rounded-full border border-district-border px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="rounded-full border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3 py-1.5 text-xs font-medium text-subtle transition hover:brightness-95 disabled:opacity-60"
                         >
                           {action}
                         </button>
@@ -164,15 +166,12 @@ export function FloatingChat({
                       onChange={(event) => setText(event.target.value)}
                       type="text"
                       placeholder="Digite sua mensagem..."
-                      className="h-10 rounded-md border border-district-border px-3 text-sm outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                      className="input-base h-10"
                       aria-label={`Mensagem de ${title}`}
                     />
-                    <button
-                      type="submit"
-                      className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700"
-                    >
+                    <ButtonBase type="submit" variant="primary" className="h-10 rounded-md px-4">
                       Enviar
-                    </button>
+                    </ButtonBase>
                   </div>
                 </form>
               </>
@@ -182,19 +181,20 @@ export function FloatingChat({
       )}
 
       {isOpen && (
-        <section className="fixed bottom-20 right-4 z-40 flex h-[70dvh] w-[calc(100%-1.25rem)] max-w-sm flex-col rounded-mdx border border-district-border bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 md:bottom-24 md:right-6 lg:hidden">
-          <header className="flex items-center justify-between border-b border-district-border px-4 py-3 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
-            <button
+        <section className="panel fixed bottom-20 right-4 z-40 flex h-[70dvh] w-[calc(100%-1.25rem)] max-w-sm flex-col overflow-hidden md:bottom-24 md:right-6 lg:hidden">
+          <header className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border-color)" }}>
+            <h3 className="text-sm font-semibold text-[color:var(--text-primary)]">{title}</h3>
+            <ButtonBase
               type="button"
+              variant="secondary"
               onClick={() => setIsOpen(false)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-district-border text-gray-700 dark:border-gray-700 dark:text-gray-100"
+              className="h-8 w-8 px-0"
               aria-label="Fechar chat do edital"
             >
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
               </svg>
-            </button>
+            </ButtonBase>
           </header>
 
           <div ref={containerRef} className="flex-1 space-y-2.5 overflow-y-auto p-3.5">
@@ -204,15 +204,12 @@ export function FloatingChat({
               </p>
             ) : (
               messages.map((message) => (
-                <article
-                  key={message.id}
-                  className="rounded-md bg-gray-50 p-3 dark:bg-gray-800"
-                >
+                <article key={message.id} className="panel-muted p-3">
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <strong className="text-xs text-gray-800 dark:text-gray-100">{message.usuario}</strong>
-                    <span className="text-[11px] text-gray-500 dark:text-gray-400">{message.horario}</span>
+                    <strong className="text-xs text-[color:var(--text-primary)]">{message.usuario}</strong>
+                    <span className="text-subtle text-[11px]">{message.horario}</span>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                  <div className="text-sm text-subtle">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -223,7 +220,7 @@ export function FloatingChat({
                         ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5">{children}</ul>,
                         ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5">{children}</ol>,
                         li: ({ children }) => <li>{children}</li>,
-                        strong: ({ children }) => <strong className="font-semibold text-gray-800 dark:text-gray-100">{children}</strong>
+                        strong: ({ children }) => <strong className="font-semibold text-[color:var(--text-primary)]">{children}</strong>
                       }}
                     >
                       {message.conteudo}
@@ -239,13 +236,13 @@ export function FloatingChat({
               </p>
             )}
             {uploadFeedback && (
-              <p className="text-xs text-gray-600 dark:text-gray-300" aria-live="polite">
+                <p className="text-subtle text-xs" aria-live="polite">
                 {uploadFeedback}
               </p>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-district-border p-2.5 dark:border-gray-700">
+          <form onSubmit={handleSubmit} className="border-t p-2.5" style={{ borderColor: "var(--border-color)" }}>
             {contextualQuickActions.length > 0 && (
               <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
                 {contextualQuickActions.map((action) => (
@@ -254,7 +251,7 @@ export function FloatingChat({
                     type="button"
                     onClick={() => sendMessage(action)}
                     disabled={isReplying}
-                    className="whitespace-nowrap rounded-full border border-district-border px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="whitespace-nowrap rounded-full border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3 py-1.5 text-xs font-medium text-subtle transition hover:brightness-95 disabled:opacity-60"
                   >
                     {action}
                   </button>
@@ -271,24 +268,22 @@ export function FloatingChat({
                 onChange={(event) => setText(event.target.value)}
                 type="text"
                 placeholder="Digite sua mensagem..."
-                className="h-10 rounded-md border border-district-border px-3 text-sm outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                className="input-base h-10"
                 aria-label={`Mensagem de ${title}`}
               />
-              <button
-                type="submit"
-                className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-              >
+              <ButtonBase type="submit" variant="primary" className="h-10 rounded-md px-4">
                 Enviar
-              </button>
+              </ButtonBase>
             </div>
           </form>
         </section>
       )}
 
-      <button
+      <ButtonBase
         type="button"
+        variant="primary"
         onClick={() => setIsOpen((currentState) => !currentState)}
-        className="fixed bottom-4 right-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full bg-district-red text-white shadow-lg transition hover:bg-red-700 md:bottom-6 md:right-6 lg:hidden"
+        className="fixed bottom-4 right-4 z-40 h-12 w-12 rounded-full px-0 shadow-lg md:bottom-6 md:right-6 lg:hidden"
         aria-label={isOpen ? `Minimizar ${triggerLabel}` : `Abrir ${triggerLabel}`}
       >
         {isOpen ? (
@@ -301,7 +296,7 @@ export function FloatingChat({
             <path d="M5 19V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 2z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
-      </button>
+      </ButtonBase>
     </>
   );
 }

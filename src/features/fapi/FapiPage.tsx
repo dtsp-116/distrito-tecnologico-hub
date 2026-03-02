@@ -8,6 +8,7 @@ import { UploadArea } from "@/features/fapi/components/UploadArea";
 import { MessageBubble } from "@/features/fapi/components/MessageBubble";
 import { EvaluationResultCard } from "@/features/fapi/components/EvaluationResultCard";
 import { FapiChatLayout } from "@/features/fapi/components/FapiChatLayout";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 
 interface FapiPageProps {
   agencias: Agencia[];
@@ -152,7 +153,7 @@ export function FapiPage({ agencias }: FapiPageProps) {
               <button
                 type="submit"
                 disabled={isAnalyzing}
-                className="h-10 w-full rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="btn-base btn-primary h-10 w-full disabled:opacity-60"
               >
                 {isAnalyzing ? "Analisando FAPI..." : "Iniciar analise tecnica"}
               </button>
@@ -170,34 +171,35 @@ export function FapiPage({ agencias }: FapiPageProps) {
                 <MessageBubble key={message.id} role={message.role} content={message.content} />
               ))}
               {isReplying && (
-                <p className="text-xs font-medium text-district-red" aria-live="polite">
+              <p className="text-xs font-medium text-[color:var(--primary)]" aria-live="polite">
                   Assistente digitando...
                 </p>
               )}
             </>
           )}
           {error && (
-            <p className="rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
+            <p className="rounded-lg border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
               {error}
             </p>
           )}
         </div>
 
         {sessionId && (
-          <form onSubmit={handleSendMessage} className="sticky bottom-0 grid grid-cols-[1fr_auto] gap-2 border-t border-district-border bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+          <form onSubmit={handleSendMessage} className="sticky bottom-0 grid grid-cols-[1fr_auto] gap-2 border-t p-3" style={{ borderColor: "var(--border-color)", background: "var(--bg-elevated)" }}>
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Pergunte algo sobre a FAPI analisada..."
-              className="h-10 rounded-md border border-district-border bg-white px-3 text-sm outline-none focus:border-district-red dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className="input-base h-10"
             />
-            <button
+            <ButtonBase
               type="submit"
+              variant="primary"
               disabled={isReplying || !draft.trim()}
-              className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="h-10 px-4 disabled:opacity-60"
             >
               Enviar
-            </button>
+            </ButtonBase>
           </form>
         )}
       </FapiChatLayout>

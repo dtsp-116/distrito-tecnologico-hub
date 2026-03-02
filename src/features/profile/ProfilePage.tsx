@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CardBase } from "@/components/ui/CardBase";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 import { Agencia } from "@/types";
 
 interface ProfilePageProps {
@@ -225,12 +227,12 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
   return (
     <MainLayout agencias={agencias}>
       <div className="mx-auto max-w-4xl space-y-5">
-        <section className="rounded-mdx border border-district-border bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-6">
+        <CardBase className="p-5 md:p-6">
           <div className="mb-3 flex justify-end">
             <ThemeToggle />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Meu perfil</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          <h1 className="text-lg font-bold text-[color:var(--text-primary)]">Meu perfil</h1>
+          <p className="text-subtle mt-1 text-sm">
             Atualize seu nome de exibicao e senha de acesso.
           </p>
 
@@ -240,7 +242,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="h-11 rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                className="input-base"
                 placeholder="Seu nome"
                 required
               />
@@ -251,7 +253,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               <input
                 value={email}
                 readOnly
-                className="h-11 rounded-md border border-district-border bg-gray-50 px-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                className="input-base bg-[var(--bg-subtle)] text-subtle"
               />
             </label>
 
@@ -261,7 +263,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-11 rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                className="input-base"
                 placeholder="Deixe em branco para nao alterar"
               />
             </label>
@@ -272,18 +274,19 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                className="h-11 rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                className="input-base"
                 placeholder="Repita a nova senha"
               />
             </label>
 
-            <button
+            <ButtonBase
               type="submit"
+              variant="primary"
               disabled={isSaving}
-              className="h-11 rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="h-11 px-4 disabled:opacity-60"
             >
               {isSaving ? "Salvando..." : "Salvar alteracoes"}
-            </button>
+            </ButtonBase>
 
             {error && (
               <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -296,12 +299,12 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               </p>
             )}
           </form>
-        </section>
+        </CardBase>
 
         {isAdmin && (
-          <section className="rounded-mdx border border-district-border bg-white p-5 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Gestao de usuarios</h2>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          <CardBase className="p-5 md:p-6">
+            <h2 className="text-lg font-bold text-[color:var(--text-primary)]">Gestao de usuarios</h2>
+            <p className="text-subtle mt-1 text-sm">
               Crie, edite, exclua usuarios e resete senha para 12345678 quando necessario.
             </p>
 
@@ -339,7 +342,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               <button
                 type="submit"
                 disabled={isCreatingUser}
-                className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="btn-base btn-primary h-10 px-4 disabled:opacity-60"
               >
                 {isCreatingUser ? "Criando..." : "Criar"}
               </button>
@@ -356,14 +359,14 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               </p>
             )}
 
-            <div className="mt-4 overflow-x-auto rounded-md border border-district-border dark:border-gray-700">
+            <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border-color)]">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead className="bg-[var(--bg-subtle)]">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Nome</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">E-mail</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Papel</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200">Acoes</th>
+                    <th className="px-3 py-2 text-left font-semibold text-[color:var(--text-primary)]">Nome</th>
+                    <th className="px-3 py-2 text-left font-semibold text-[color:var(--text-primary)]">E-mail</th>
+                    <th className="px-3 py-2 text-left font-semibold text-[color:var(--text-primary)]">Papel</th>
+                    <th className="px-3 py-2 text-left font-semibold text-[color:var(--text-primary)]">Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -383,7 +386,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                     users.map((user) => {
                       const isEditing = editingUserId === user.id;
                       return (
-                        <tr key={user.id} className="border-t border-district-border dark:border-gray-700">
+                        <tr key={user.id} className="border-t border-[var(--border-color)]">
                           <td className="px-3 py-2 text-gray-800 dark:text-gray-200">
                             {isEditing ? (
                               <input
@@ -429,14 +432,14 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                                     type="button"
                                     onClick={() => void handleSaveUserEdit(user.id)}
                                     disabled={isSavingUserEdit}
-                                    className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                                    className="btn-base btn-secondary h-7 rounded-md px-2 py-1 text-xs"
                                   >
                                     Salvar
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setEditingUserId(null)}
-                                    className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                                    className="btn-base btn-ghost h-7 rounded-md px-2 py-1 text-xs"
                                   >
                                     Cancelar
                                   </button>
@@ -446,21 +449,21 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                                   <button
                                     type="button"
                                     onClick={() => startEditingUser(user)}
-                                    className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                                    className="btn-base btn-secondary h-7 rounded-md px-2 py-1 text-xs"
                                   >
                                     Editar
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => void handleResetPassword(user.id, user.name)}
-                                    className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                                    className="btn-base btn-secondary h-7 rounded-md px-2 py-1 text-xs"
                                   >
                                     Reset senha
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => void handleDeleteUser(user.id, user.name)}
-                                    className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 dark:border-red-800 dark:text-red-300"
+                                    className="btn-base btn-danger h-7 rounded-md px-2 py-1 text-xs"
                                   >
                                     Excluir
                                   </button>
@@ -475,7 +478,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                 </tbody>
               </table>
             </div>
-          </section>
+          </CardBase>
         )}
       </div>
     </MainLayout>

@@ -4,6 +4,8 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { MainLayout } from "@/layouts/MainLayout";
 import { EditalStatus } from "@/types";
 import { useAdminPanel } from "@/features/admin/useAdminPanel";
+import { ButtonBase } from "@/components/ui/ButtonBase";
+import { CardBase } from "@/components/ui/CardBase";
 
 const statusOptions: { value: EditalStatus; label: string }[] = [
   { value: "aberto", label: "Aberto" },
@@ -313,15 +315,15 @@ export function AdminPage() {
   return (
     <MainLayout agencias={agencias} isAdminRoute>
       <div className="space-y-5">
-        <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-5">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Painel do administrador</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Fluxo otimizado para criar, editar e excluir editais com arquivos e RAG.</p>
-          <div className="mt-4 grid gap-3 rounded-md border border-district-border p-3 dark:border-gray-700">
+        <CardBase className="p-4 md:p-5">
+          <h1 className="text-lg font-bold text-[color:var(--text-primary)]">Painel do administrador</h1>
+          <p className="text-subtle mt-2 text-sm">Fluxo otimizado para criar, editar e excluir editais com arquivos e RAG.</p>
+          <div className="panel-muted mt-4 grid gap-3 p-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <label className="text-subtle mb-1 block text-xs font-semibold uppercase tracking-wide">
                 Nivel da busca RAG
               </label>
-              <div className="inline-flex rounded-md border border-district-border bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800/80">
+              <div className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-1">
                 {(["baixo", "medio", "alto"] as const).map((level) => (
                   <button
                     key={level}
@@ -331,14 +333,14 @@ export function AdminPage() {
                     className={`h-8 rounded px-3 text-xs font-semibold uppercase tracking-wide transition ${
                       localRagLevel === level
                         ? "bg-district-red text-white shadow-sm"
-                        : "text-gray-600 hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                        : "text-subtle hover:bg-[var(--bg-elevated)] hover:text-[color:var(--text-primary)]"
                     }`}
                   >
                     {level}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-subtle mt-2 text-xs">
                 {localRagLevel === "baixo"
                   ? "Busca mais estrita e focada."
                   : localRagLevel === "medio"
@@ -346,7 +348,7 @@ export function AdminPage() {
                     : "Busca mais ampla para maior cobertura."}
               </p>
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+            <label className="inline-flex items-center gap-2 text-sm text-[color:var(--text-primary)]">
               <input
                 type="checkbox"
                 checked={localLegacyFallback}
@@ -358,52 +360,55 @@ export function AdminPage() {
               </span>
               Fallback lexical/simples
             </label>
-            <button
+            <ButtonBase
               type="button"
+              variant="secondary"
               onClick={handleSaveRagSettings}
               disabled={isSavingRagSettings}
-              className="h-10 rounded-md border border-district-border px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+              className="h-10 px-4 disabled:opacity-60"
             >
               {isSavingRagSettings ? "Salvando..." : "Salvar RAG"}
-            </button>
+            </ButtonBase>
           </div>
-          {isLoading && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Carregando dados...</p>}
+          {isLoading && <p className="text-subtle mt-2 text-sm">Carregando dados...</p>}
           {error && <p className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/20 dark:text-red-200">{error}</p>}
           {feedback && <p className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200">{feedback}</p>}
-        </section>
+        </CardBase>
 
         <div className="flex gap-2">
-          <button type="button" onClick={() => setActiveTab("editais")} className={`h-10 rounded-md px-4 text-sm font-semibold ${activeTab === "editais" ? "bg-district-red text-white" : "border border-district-border text-gray-700 dark:border-gray-700 dark:text-gray-200"}`}>Gestao de editais</button>
-          <button type="button" onClick={() => setActiveTab("agencias")} className={`h-10 rounded-md px-4 text-sm font-semibold ${activeTab === "agencias" ? "bg-district-red text-white" : "border border-district-border text-gray-700 dark:border-gray-700 dark:text-gray-200"}`}>Gestao de agencias</button>
+          <ButtonBase type="button" variant={activeTab === "editais" ? "primary" : "secondary"} onClick={() => setActiveTab("editais")} className="h-10 px-4 text-sm">Gestao de editais</ButtonBase>
+          <ButtonBase type="button" variant={activeTab === "agencias" ? "primary" : "secondary"} onClick={() => setActiveTab("agencias")} className="h-10 px-4 text-sm">Gestao de agencias</ButtonBase>
         </div>
 
         {activeTab === "agencias" ? (
           <section className="grid gap-5 xl:grid-cols-2">
-            <form onSubmit={handleAgencySubmit} className="space-y-3 rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-5">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Cadastrar agencia</h2>
-              <input value={agencyForm.nome} onChange={(event) => setAgencyForm((prev) => ({ ...prev, nome: event.target.value }))} className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" placeholder="Nome da agencia" required />
-              <input value={agencyForm.sigla} onChange={(event) => setAgencyForm((prev) => ({ ...prev, sigla: event.target.value }))} className="h-11 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" placeholder="Sigla" required />
-              <textarea value={agencyForm.descricao} onChange={(event) => setAgencyForm((prev) => ({ ...prev, descricao: event.target.value }))} className="min-h-28 w-full rounded-md border border-district-border bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" placeholder="Descricao" required />
-              <button type="submit" className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white">Salvar agencia</button>
-            </form>
+            <CardBase className="space-y-3 p-4 md:p-5">
+              <h2 className="text-base font-semibold text-[color:var(--text-primary)]">Cadastrar agencia</h2>
+              <form onSubmit={handleAgencySubmit} className="space-y-3">
+                <input value={agencyForm.nome} onChange={(event) => setAgencyForm((prev) => ({ ...prev, nome: event.target.value }))} className="input-base" placeholder="Nome da agencia" required />
+                <input value={agencyForm.sigla} onChange={(event) => setAgencyForm((prev) => ({ ...prev, sigla: event.target.value }))} className="input-base" placeholder="Sigla" required />
+                <textarea value={agencyForm.descricao} onChange={(event) => setAgencyForm((prev) => ({ ...prev, descricao: event.target.value }))} className="textarea-base min-h-28" placeholder="Descricao" required />
+                <ButtonBase type="submit" variant="primary" className="h-10 px-4">Salvar agencia</ButtonBase>
+              </form>
+            </CardBase>
 
-            <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-5">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Agencias cadastradas</h2>
-              <ul className="mt-3 space-y-2">{agencias.map((agencia) => <li key={agencia.id} className="rounded-md border border-district-border px-3 py-2 text-sm dark:border-gray-700"><p className="font-medium text-gray-900 dark:text-gray-100">{agencia.sigla}</p><p className="text-gray-600 dark:text-gray-300">{agencia.nome}</p></li>)}</ul>
-            </section>
+            <CardBase className="p-4 md:p-5">
+              <h2 className="text-base font-semibold text-[color:var(--text-primary)]">Agencias cadastradas</h2>
+              <ul className="mt-3 space-y-2">{agencias.map((agencia) => <li key={agencia.id} className="panel-muted px-3 py-2 text-sm"><p className="font-medium text-[color:var(--text-primary)]">{agencia.sigla}</p><p className="text-subtle">{agencia.nome}</p></li>)}</ul>
+            </CardBase>
           </section>
         ) : (
           <section className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <aside className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
+            <CardBase className="p-4">
               <div className="mb-3 flex gap-2">
-                <input value={noticeSearch} onChange={(event) => setNoticeSearch(event.target.value)} placeholder="Buscar edital..." className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100" />
-                <button type="button" onClick={() => { setIsCreatingNewNotice(true); setSelectedNoticeId(null); setEditalForm(getEmptyNoticeForm()); setTagInput(""); setNoticeFileSearch(""); }} className="h-10 rounded-md border border-district-border px-3 text-sm font-semibold">Novo</button>
+                <input value={noticeSearch} onChange={(event) => setNoticeSearch(event.target.value)} placeholder="Buscar edital..." className="input-base h-10" />
+                <ButtonBase type="button" variant="secondary" onClick={() => { setIsCreatingNewNotice(true); setSelectedNoticeId(null); setEditalForm(getEmptyNoticeForm()); setTagInput(""); setNoticeFileSearch(""); }} className="h-10 px-3 text-sm">Novo</ButtonBase>
               </div>
               <div className="mb-3 grid gap-2 sm:grid-cols-2">
                 <select
                   value={noticeFilterAgencyId}
                   onChange={(event) => setNoticeFilterAgencyId(event.target.value)}
-                  className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                  className="input-base h-10"
                 >
                   <option value="">Todas as agencias</option>
                   {agencyOptions.map((option) => (
@@ -415,7 +420,7 @@ export function AdminPage() {
                 <select
                   value={noticeFilterStatus}
                   onChange={(event) => setNoticeFilterStatus(event.target.value as EditalStatus | "")}
-                  className="h-10 w-full rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                  className="input-base h-10"
                 >
                   <option value="">Todos os status</option>
                   {statusOptions.map((option) => (
@@ -433,12 +438,12 @@ export function AdminPage() {
                     setNoticeFilterAgencyId("");
                     setNoticeFilterStatus("");
                   }}
-                  className="mb-3 h-9 rounded-md border border-district-border px-3 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                  className="btn-base btn-secondary mb-3 h-9 px-3 text-xs"
                 >
                   Limpar filtros
                 </button>
               )}
-              <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{filteredNotices.length} edital(is) encontrado(s)</p>
+              <p className="text-subtle mb-2 text-xs">{filteredNotices.length} edital(is) encontrado(s)</p>
               <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
                 {filteredNotices.map((edital) => (
                   <button key={edital.id} type="button" onClick={() => { setIsCreatingNewNotice(false); setSelectedNoticeId(edital.id); }} className={`w-full rounded-md border px-3 py-2 text-left ${selectedNoticeId === edital.id ? "border-district-red bg-red-50 dark:bg-red-950/20" : "border-district-border hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"}`}>
@@ -447,7 +452,7 @@ export function AdminPage() {
                   </button>
                 ))}
               </div>
-            </aside>
+            </CardBase>
 
             <div className="space-y-5">
               <form onSubmit={handleEditalSubmit} className="space-y-3 rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900 md:p-5">

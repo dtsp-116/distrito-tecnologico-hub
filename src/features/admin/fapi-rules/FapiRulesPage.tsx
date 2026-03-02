@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { MainLayout } from "@/layouts/MainLayout";
 import { Agencia, Edital } from "@/types";
+import { CardBase } from "@/components/ui/CardBase";
+import { ButtonBase } from "@/components/ui/ButtonBase";
 
 type RuleType = "geral" | "agencia" | "edital";
 
@@ -142,24 +144,24 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
   return (
     <MainLayout agencias={agencias} isAdminRoute>
       <div className="space-y-4">
-        <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
+        <CardBase className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h1 className="text-base font-bold text-gray-900 dark:text-gray-100">Admin - Regras FAPI</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <h1 className="text-base font-bold text-[color:var(--text-primary)]">Admin - Regras FAPI</h1>
+              <p className="text-subtle text-sm">
                 Defina regras gerais, por agencia e por edital para analise tecnica.
               </p>
             </div>
             <Link
               href="/admin"
-              className="h-10 rounded-md border border-district-border px-3 text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+              className="btn-base btn-secondary h-10 px-3 text-sm"
             >
               Voltar ao admin
             </Link>
           </div>
-        </section>
+        </CardBase>
 
-        <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
+        <CardBase className="p-4">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo</span>
@@ -173,7 +175,7 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
                     editalId: ""
                   }))
                 }
-                className="h-10 w-full rounded-md border border-district-border px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                className="input-base h-10"
               >
                 <option value="geral">Geral</option>
                 <option value="agencia">Agencia</option>
@@ -187,7 +189,7 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
                 <select
                   value={form.agenciaId}
                   onChange={(event) => setForm((current) => ({ ...current, agenciaId: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-district-border px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                  className="input-base h-10"
                 >
                   <option value="">Selecione</option>
                   {agencias.map((agency) => (
@@ -205,7 +207,7 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
                 <select
                   value={form.editalId}
                   onChange={(event) => setForm((current) => ({ ...current, editalId: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-district-border px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                  className="input-base h-10"
                 >
                   <option value="">Selecione</option>
                   {editais.map((edital) => (
@@ -224,7 +226,7 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
               value={form.descricao}
               onChange={(event) => setForm((current) => ({ ...current, descricao: event.target.value }))}
               rows={5}
-              className="w-full rounded-md border border-district-border px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className="textarea-base"
             />
           </label>
 
@@ -238,37 +240,39 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
           </label>
 
           <div className="mt-3 flex gap-2">
-            <button
+            <ButtonBase
               type="button"
+              variant="primary"
               onClick={handleSave}
               disabled={isSaving}
-              className="h-10 rounded-md bg-district-red px-4 text-sm font-semibold text-white disabled:opacity-60"
+              className="h-10 px-4 disabled:opacity-60"
             >
               {isSaving ? "Salvando..." : form.id ? "Atualizar regra" : "Criar regra"}
-            </button>
-            <button
+            </ButtonBase>
+            <ButtonBase
               type="button"
+              variant="secondary"
               onClick={clearForm}
-              className="h-10 rounded-md border border-district-border px-4 text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+              className="h-10 px-4"
             >
               Limpar
-            </button>
+            </ButtonBase>
           </div>
-          {feedback && <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">{feedback}</p>}
-        </section>
+          {feedback && <p className="text-subtle mt-2 text-xs">{feedback}</p>}
+        </CardBase>
 
-        <section className="rounded-mdx border border-district-border bg-white p-4 shadow-card dark:border-gray-700 dark:bg-gray-900">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Regras cadastradas</h2>
+        <CardBase className="p-4">
+          <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">Regras cadastradas</h2>
           {isLoading ? (
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Carregando regras...</p>
           ) : rules.length === 0 ? (
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Nenhuma regra cadastrada.</p>
           ) : (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-3">
               {rules.map((rule) => (
-                <article key={rule.id} className="rounded-md border border-district-border p-3 dark:border-gray-700">
+                <article key={rule.id} className="panel-muted p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <p className="text-subtle text-xs font-semibold uppercase tracking-wide">
                       {rule.tipo} • {rule.ativa ? "ativa" : "inativa"}
                     </p>
                     <div className="flex gap-2">
@@ -284,28 +288,28 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
                             ativa: rule.ativa
                           })
                         }
-                        className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                        className="btn-base btn-secondary h-7 rounded-md px-2 py-1 text-xs"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => toggleRule(rule)}
-                        className="rounded-md border border-district-border px-2 py-1 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                        className="btn-base btn-secondary h-7 rounded-md px-2 py-1 text-xs"
                       >
                         {rule.ativa ? "Desativar" : "Ativar"}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(rule.id)}
-                        className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 dark:border-red-800 dark:text-red-300"
+                        className="btn-base btn-danger h-7 rounded-md px-2 py-1 text-xs"
                       >
                         Excluir
                       </button>
                     </div>
                   </div>
-                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-200">{rule.descricao}</p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-2 text-sm text-[color:var(--text-primary)]">{rule.descricao}</p>
+                  <p className="text-subtle mt-1 text-xs">
                     {rule.tipo === "agencia"
                       ? `Agencia: ${agencyNameById.get(rule.agencia_id ?? "") ?? "nao encontrada"}`
                       : rule.tipo === "edital"
@@ -316,7 +320,7 @@ export function FapiRulesPage({ agencias, editais }: FapiRulesPageProps) {
               ))}
             </div>
           )}
-        </section>
+        </CardBase>
       </div>
     </MainLayout>
   );
