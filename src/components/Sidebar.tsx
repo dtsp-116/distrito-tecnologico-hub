@@ -31,14 +31,12 @@ export function Sidebar({
   return (
     <aside className="h-full overflow-y-auto rounded-2xl p-4">
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-subtle">Navegacao</h2>
-      <nav aria-label="Menu lateral de agencias" className="space-y-2">
+      <nav aria-label="Menu principal" className="space-y-2">
         <Link
           href="/hub"
           onClick={onNavigate}
           className={`${linkBaseClass} ${
-            !isAdminRoute && !activeAgencyId
-              ? linkActiveClass
-              : linkIdleClass
+            !isAdminRoute && !activeAgencyId ? linkActiveClass : linkIdleClass
           }`}
         >
           <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
@@ -47,58 +45,38 @@ export function Sidebar({
         <Link
           href="/fapi"
           onClick={onNavigate}
-          className={`${linkBaseClass} ${
-            isFapiRoute
-              ? linkActiveClass
-              : linkIdleClass
-          }`}
+          className={`${linkBaseClass} ${isFapiRoute ? linkActiveClass : linkIdleClass}`}
         >
           <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
           Analise de FAPI
         </Link>
-        {canViewAdmin && (
-          <Link
-            href="/admin"
-            onClick={onNavigate}
-            className={`${linkBaseClass} ${
-              isAdminRoute
-                ? linkActiveClass
-                : linkIdleClass
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-            Painel Admin
-          </Link>
-        )}
-        {canViewAdmin && (
-          <Link
-            href="/admin/fapi-rules"
-            onClick={onNavigate}
-            className={`${linkBaseClass} ${
-              isAdminRulesRoute
-                ? linkActiveClass
-                : linkIdleClass
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-            Regras FAPI
-          </Link>
-        )}
-        <Link
-          href="/perfil"
-          onClick={onNavigate}
-          className={`${linkBaseClass} ${
-            isProfileRoute
-              ? linkActiveClass
-              : linkIdleClass
-          }`}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-          Meu perfil
-        </Link>
       </nav>
 
-      <h2 className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-subtle">Agencias</h2>
+      {canViewAdmin && (
+        <>
+          <h2 className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-subtle">Administracao</h2>
+          <nav aria-label="Menu administrativo" className="space-y-2">
+            <Link
+              href="/admin"
+              onClick={onNavigate}
+              className={`${linkBaseClass} ${isAdminRoute ? linkActiveClass : linkIdleClass}`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+              Painel Admin
+            </Link>
+            <Link
+              href="/admin/fapi-rules"
+              onClick={onNavigate}
+              className={`${linkBaseClass} ${isAdminRulesRoute ? linkActiveClass : linkIdleClass}`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+              Regras FAPI
+            </Link>
+          </nav>
+        </>
+      )}
+
+      <h2 className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wide text-subtle text-[11px]">Agencias</h2>
       <nav aria-label="Lista de agencias" className="space-y-2">
         {agencias.map((agencia) => (
           <Link
