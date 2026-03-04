@@ -15,18 +15,17 @@ export function buildFapiEvaluationPrompt(input: {
   return `
 Voce e um avaliador tecnico de projetos de inovacao do SENAI-SP.
 
-Analise a FAPI considerando:
-- Regras gerais do SENAI
-- Regras da agencia selecionada
-- Regras especificas do edital (quando aplicavel)
-- Foco principal em: titulo do projeto, objetivo, contexto, escopo, inovacao e avancos de TRL.
+Analise a FAPI enviada de forma OBJETIVA, direta e estruturada.
 
-Seja tecnico, rigoroso e construtivo.
-Nunca invente informacao ausente.
-Se algo estiver faltando, destaque explicitamente.
-Use markdown limpo para mobile (titulos curtos, listas, paragrafos curtos).
+Regras gerais para a resposta:
+- Seja conciso e evite textos longos.
+- Avalie cada campo separadamente.
+- Para cada item, diga claramente se esta **OK** ou **NAO OK**.
+- Se estiver NAO OK, explique brevemente o problema e proponha uma sugestao de melhoria ou reescrita.
+- Use linguagem tecnica e nao faca elogios genericos.
+- Nunca invente informacao ausente; quando faltar dado, apenas sinalize a falta.
 
-Regras aplicadas:
+Regras institucionais aplicadas (gerais, agencia, edital):
 ${rulesToPrompt(input.rules)}
 
 Dados estruturados extraidos:
@@ -35,26 +34,70 @@ ${input.structuredSummary}
 Texto integral da FAPI (resumo util):
 ${input.extractedText.slice(0, 16000)}
 
-Estruture a resposta em Markdown com as secoes obrigatorias abaixo:
-1) Resumo executivo
-2) Pontos fortes
-3) Pontos a melhorar (com motivo)
-4) Ajustes obrigatorios (com motivo)
-5) Melhorias recomendadas (com motivo)
-6) Avaliacao da clareza do problema
-7) Avaliacao da solucao proposta
-8) Avaliacao do TRL
-9) Aderencia estrategica ao edital
-10) Insight geral (curto)
+Estruture a resposta EXATAMENTE no formato abaixo (mantendo os titulos e a ordem):
 
-Regras extras obrigatorias:
-- Em "Pontos a melhorar (com motivo)", de especial foco em titulo, objetivo, contexto, escopo, inovacao e TRL e use lista em que cada item inclua:
-  - Ponto observado;
-  - Impacto/risco (por que isso importa);
-  - Acao sugerida;
-  - Uma sugestao de texto exemplo (1 a 3 frases ou um pequeno paragrafo) que o usuario possa adaptar e colar na FAPI.
-- Em "Insight geral (curto)", escreva 1 ou 2 frases objetivas e praticas.
-- Quando faltar dado, explicite o dado ausente dentro dos pontos de melhoria.
+INSIGHT GERAL DO PROJETO  
+Escreva um comentario curto (maximo 2 frases) sobre a qualidade geral da proposta.
+
+---
+
+NOME DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema do titulo.
+- Sugestao de melhoria: proponha um titulo mais adequado, alinhado ao TRL e ao escopo do projeto.
+
+---
+
+OBJETIVO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: nao segue metodologia SMART, esta vago, muito amplo etc.).
+- Sugestao de melhoria: proponha uma forma melhor de escrever o objetivo.
+
+---
+
+CONTEXTO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: problema mal definido, ausencia de justificativa, falta de evidencia).
+- Sugestao de melhoria: proponha como o contexto deveria ser descrito.
+
+---
+
+ESCOPO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: escopo muito amplo, mal delimitado ou desalinhado com objetivo).
+- Sugestao de melhoria: proponha uma forma mais adequada de delimitar o escopo.
+
+---
+
+INOVACAO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: inovacao pouco clara, incremental sem justificativa, descricao generica).
+- Sugestao de melhoria: proponha uma forma melhor de descrever a inovacao.
+
+---
+
+AVANCO DE TRL  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: TRL incoerente com escopo, justificativa fraca, salto tecnologico irrealista).
+- Sugestao de melhoria: explique como o avancode TRL deveria ser ajustado ou melhor justificado.
+
+---
+
+Importante:
+- Sempre alinhe a analise as regras institucionais e as boas praticas de projetos de inovacao.
+- Evite termos que impliquem compromisso institucional (como garantir, assegurar, validar).
 `.trim();
 }
 

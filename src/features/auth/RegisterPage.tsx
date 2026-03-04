@@ -6,6 +6,16 @@ import { useRouter } from "next/navigation";
 import { DistrictLogo } from "@/components/DistrictLogo";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+const ALLOWED_DOMAINS = ["sesisenaisp.org.br", "sp.senai.br"] as const;
+
+function isAllowedInstitutionalEmail(email: string) {
+  const [, rawDomain] = email.split("@");
+  if (!rawDomain) return false;
+
+  const domain = rawDomain.trim().toLowerCase();
+  return ALLOWED_DOMAINS.includes(domain as (typeof ALLOWED_DOMAINS)[number]);
+}
+
 export function RegisterPage() {
   const router = useRouter();
   const [nome, setNome] = useState("");
@@ -21,6 +31,12 @@ export function RegisterPage() {
 
     setError("");
     setSuccess("");
+
+    if (!isAllowedInstitutionalEmail(email.trim())) {
+      setError("Use apenas email institucional SENAI-SP (@sesisenaisp.org.br ou @sp.senai.br).");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

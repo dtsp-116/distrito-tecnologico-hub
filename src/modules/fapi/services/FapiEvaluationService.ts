@@ -20,8 +20,10 @@ function normalizeText(value: string) {
 function hasMinimumFapiSections(response: string) {
   const normalized = normalizeText(response);
   return (
-    normalized.includes("pontos a melhorar") &&
-    normalized.includes("insight geral")
+    normalized.includes("insight geral do projeto") &&
+    normalized.includes("nome do projeto") &&
+    normalized.includes("objetivo do projeto") &&
+    normalized.includes("avanco de trl")
   );
 }
 
@@ -91,18 +93,75 @@ export class FapiEvaluationService {
               {
                 role: "system",
                 content:
-                  "Reestruture a avaliacao em markdown mantendo apenas o conteudo original, sem inventar dados."
+                  "Reestruture a avaliacao mantendo apenas o conteudo original, sem inventar dados."
               },
               {
                 role: "user",
                 content: `
-Reestruture a avaliacao abaixo para incluir obrigatoriamente:
-- "Pontos a melhorar (com motivo)" em lista com: ponto, impacto/risco e acao sugerida;
-- "Insight geral (curto)" com 1-2 frases.
+Reestruture a avaliacao abaixo para seguir EXATAMENTE o formato:
 
-Nao adicione fatos novos. Se faltar informacao, explicite o dado ausente.
+INSIGHT GERAL DO PROJETO  
+Comentario curto (maximo 2 frases) sobre a qualidade geral da proposta.
 
-Avaliacao original:
+---
+
+NOME DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema do titulo.
+- Sugestao de melhoria: proponha um titulo mais adequado, alinhado ao TRL e ao escopo do projeto.
+
+---
+
+OBJETIVO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: nao segue metodologia SMART, esta vago, muito amplo etc.).
+- Sugestao de melhoria: proponha uma forma melhor de escrever o objetivo.
+
+---
+
+CONTEXTO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: problema mal definido, ausencia de justificativa, falta de evidencia).
+- Sugestao de melhoria: proponha como o contexto deveria ser descrito.
+
+---
+
+ESCOPO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: escopo muito amplo, mal delimitado ou desalinhado com objetivo).
+- Sugestao de melhoria: proponha uma forma mais adequada de delimitar o escopo.
+
+---
+
+INOVACAO DO PROJETO  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: inovacao pouco clara, incremental sem justificativa, descricao generica).
+- Sugestao de melhoria: proponha uma forma melhor de descrever a inovacao.
+
+---
+
+AVANCO DE TRL  
+Status: OK ou NAO OK
+
+Se NAO OK:
+- Problema identificado: explique brevemente o problema (ex.: TRL incoerente com escopo, justificativa fraca, salto tecnologico irrealista).
+- Sugestao de melhoria: explique como o avanco de TRL deveria ser ajustado ou melhor justificado.
+
+---
+
+Nao adicione fatos novos. Se faltar informacao, apenas sinalize a falta dentro do item correspondente.
+
+Avaliacao original a ser reestruturada:
 ${response}
 `.trim()
               }

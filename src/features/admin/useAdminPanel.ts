@@ -112,6 +112,29 @@ export function useAdminPanel() {
     await reload();
   };
 
+  const updateAgency = async (agencyId: string, payload: CreateAgencyPayload) => {
+    const response = await fetch(`/api/admin/agencies/${agencyId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      throw new Error("Falha ao atualizar agencia.");
+    }
+    await reload();
+  };
+
+  const deleteAgency = async (agencyId: string) => {
+    const response = await fetch(`/api/admin/agencies/${agencyId}`, {
+      method: "DELETE"
+    });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(data?.error ?? "Falha ao excluir agencia.");
+    }
+    await reload();
+  };
+
   const createEdital = async (payload: CreateEditalPayload) => {
     const response = await fetch("/api/admin/notices", {
       method: "POST",
@@ -221,6 +244,8 @@ export function useAdminPanel() {
     isLoading,
     error,
     createAgency,
+    updateAgency,
+    deleteAgency,
     createEdital,
     updateEdital,
     deleteEdital,

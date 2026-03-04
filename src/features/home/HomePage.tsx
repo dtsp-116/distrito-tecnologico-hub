@@ -38,7 +38,7 @@ export function HomePage({ agencias, editais, topicos }: HomePageProps) {
   });
 
   const agenciaOptions = useMemo(
-    () => agencias.map((agencia) => ({ value: agencia.id, label: `${agencia.sigla} - ${agencia.nome}` })),
+    () => agencias.map((agencia) => ({ value: agencia.id, label: agencia.sigla })),
     [agencias]
   );
   const topicoOptions = useMemo(

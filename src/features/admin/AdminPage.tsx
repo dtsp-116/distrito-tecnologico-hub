@@ -61,6 +61,8 @@ export function AdminPage() {
     isLoading,
     error,
     createAgency,
+    updateAgency,
+    deleteAgency,
     createEdital,
     updateEdital,
     deleteEdital,
@@ -80,6 +82,7 @@ export function AdminPage() {
   const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>(null);
   const [isCreatingNewNotice, setIsCreatingNewNotice] = useState(false);
   const [agencyForm, setAgencyForm] = useState({ nome: "", sigla: "", descricao: "" });
+  const [editingAgencyId, setEditingAgencyId] = useState<string | null>(null);
   const [editalForm, setEditalForm] = useState(getEmptyNoticeForm());
   const [tagInput, setTagInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<UploadFileInput[]>([]);
@@ -98,7 +101,7 @@ export function AdminPage() {
   const [localLegacyFallback, setLocalLegacyFallback] = useState(true);
 
   const agencyOptions = useMemo(
-    () => agencias.map((agencia) => ({ value: agencia.id, label: `${agencia.sigla} - ${agencia.nome}` })),
+    () => agencias.map((agencia) => ({ value: agencia.id, label: agencia.sigla })),
     [agencias]
   );
 
@@ -203,11 +206,17 @@ export function AdminPage() {
     event.preventDefault();
     if (!agencyForm.nome.trim() || !agencyForm.sigla.trim() || !agencyForm.descricao.trim()) return;
     try {
-      await createAgency(agencyForm);
+      if (editingAgencyId) {
+        await updateAgency(editingAgencyId, agencyForm);
+        setFeedback("Agencia atualizada com sucesso.");
+      } else {
+        await createAgency(agencyForm);
+        setFeedback("Agencia cadastrada com sucesso.");
+      }
       setAgencyForm({ nome: "", sigla: "", descricao: "" });
-      setFeedback("Agencia cadastrada com sucesso.");
+      setEditingAgencyId(null);
     } catch {
-      setFeedback("Erro ao cadastrar agencia.");
+      setFeedback(editingAgencyId ? "Erro ao atualizar agencia." : "Erro ao cadastrar agencia.");
     }
   };
 
@@ -383,18 +392,85 @@ export function AdminPage() {
         {activeTab === "agencias" ? (
           <section className="grid gap-5 xl:grid-cols-2">
             <CardBase className="space-y-3 p-4 md:p-5">
-              <h2 className="text-base font-semibold text-[color:var(--text-primary)]">Cadastrar agencia</h2>
+              <h2 className="text-base font-semibold text-[color:var(--text-primary)]">
+                {editingAgencyId ? "Editar agencia" : "Cadastrar agencia"}
+              </h2>
               <form onSubmit={handleAgencySubmit} className="space-y-3">
                 <input value={agencyForm.nome} onChange={(event) => setAgencyForm((prev) => ({ ...prev, nome: event.target.value }))} className="input-base" placeholder="Nome da agencia" required />
                 <input value={agencyForm.sigla} onChange={(event) => setAgencyForm((prev) => ({ ...prev, sigla: event.target.value }))} className="input-base" placeholder="Sigla" required />
                 <textarea value={agencyForm.descricao} onChange={(event) => setAgencyForm((prev) => ({ ...prev, descricao: event.target.value }))} className="textarea-base min-h-28" placeholder="Descricao" required />
-                <ButtonBase type="submit" variant="primary" className="h-10 px-4">Salvar agencia</ButtonBase>
+                <div className="flex gap-2">
+                  <ButtonBase type="submit" variant="primary" className="h-10 px-4">
+                    {editingAgencyId ? "Atualizar agencia" : "Salvar agencia"}
+                  </ButtonBase>
+                  {editingAgencyId && (
+                    <ButtonBase
+                      type="button"
+                      variant="ghost"
+                      className="h-10 px-4"
+                      onClick={() => {
+                        setEditingAgencyId(null);
+                        setAgencyForm({ nome: "", sigla: "", descricao: "" });
+                      }}
+                    >
+                      Cancelar
+                    </ButtonBase>
+                  )}
+                </div>
               </form>
             </CardBase>
 
             <CardBase className="p-4 md:p-5">
               <h2 className="text-base font-semibold text-[color:var(--text-primary)]">Agencias cadastradas</h2>
-              <ul className="mt-3 space-y-2">{agencias.map((agencia) => <li key={agencia.id} className="panel-muted px-3 py-2 text-sm"><p className="font-medium text-[color:var(--text-primary)]">{agencia.sigla}</p><p className="text-subtle">{agencia.nome}</p></li>)}</ul>
+              <ul className="mt-3 space-y-2">
+                {agencias.map((agencia) => (
+                  <li key={agencia.id} className="panel-muted flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                    <div>
+                      <p className="font-medium text-[color:var(--text-primary)]">{agencia.sigla}</p>
+                      <p className="text-subtle text-xs">{agencia.nome}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <ButtonBase
+                        type="button"
+                        variant="secondary"
+                        className="h-8 px-3 text-xs"
+                        onClick={() => {
+                          setEditingAgencyId(agencia.id);
+                          setAgencyForm({
+                            nome: agencia.nome,
+                            sigla: agencia.sigla,
+                            descricao: agencia.descricao
+                          });
+                        }}
+                      >
+                        Editar
+                      </ButtonBase>
+                      <ButtonBase
+                        type="button"
+                        variant="danger"
+                        className="h-8 px-3 text-xs"
+                        onClick={async () => {
+                          if (!window.confirm(`Excluir a agencia "${agencia.sigla}"?`)) return;
+                          try {
+                            await deleteAgency(agencia.id);
+                            setFeedback("Agencia excluida com sucesso.");
+                            if (editingAgencyId === agencia.id) {
+                              setEditingAgencyId(null);
+                              setAgencyForm({ nome: "", sigla: "", descricao: "" });
+                            }
+                          } catch (deleteError) {
+                            const message =
+                              deleteError instanceof Error ? deleteError.message : "Erro ao excluir agencia.";
+                            setFeedback(message);
+                          }
+                        }}
+                      >
+                        Excluir
+                      </ButtonBase>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </CardBase>
           </section>
         ) : (
