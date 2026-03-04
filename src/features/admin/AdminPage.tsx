@@ -53,7 +53,11 @@ function getEmptyNoticeForm() {
   };
 }
 
-export function AdminPage() {
+interface AdminPageProps {
+  variant?: "admin" | "editor";
+}
+
+export function AdminPage({ variant = "admin" }: AdminPageProps) {
   const {
     agencias,
     editais,
@@ -321,64 +325,74 @@ export function AdminPage() {
     }
   };
 
+  const isEditorView = variant === "editor";
+
   return (
-    <MainLayout agencias={agencias} isAdminRoute>
+    <MainLayout agencias={agencias} isAdminRoute={!isEditorView}>
       <div className="space-y-5">
         <CardBase className="p-4 md:p-5">
-          <h1 className="text-lg font-bold text-[color:var(--text-primary)]">Painel do administrador</h1>
-          <p className="text-subtle mt-2 text-sm">Fluxo otimizado para criar, editar e excluir editais com arquivos e RAG.</p>
-          <div className="panel-muted mt-4 grid gap-3 p-3">
-            <div>
-              <label className="text-subtle mb-1 block text-xs font-semibold uppercase tracking-wide">
-                Nivel da busca RAG
-              </label>
-              <div className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-1">
-                {(["baixo", "medio", "alto"] as const).map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setLocalRagLevel(level)}
-                    aria-pressed={localRagLevel === level}
-                    className={`h-8 rounded px-3 text-xs font-semibold uppercase tracking-wide transition ${
-                      localRagLevel === level
-                        ? "bg-district-red text-white shadow-sm"
-                        : "text-subtle hover:bg-[var(--bg-elevated)] hover:text-[color:var(--text-primary)]"
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
+          <h1 className="text-lg font-bold text-[color:var(--text-primary)]">
+            {isEditorView ? "Gestao de editais e agencias" : "Painel do administrador"}
+          </h1>
+          <p className="text-subtle mt-2 text-sm">
+            {isEditorView
+              ? "Criar, editar e excluir editais e agencias; vincular arquivos aos editais."
+              : "Fluxo otimizado para criar, editar e excluir editais com arquivos e RAG."}
+          </p>
+          {!isEditorView && (
+            <div className="panel-muted mt-4 grid gap-3 p-3">
+              <div>
+                <label className="text-subtle mb-1 block text-xs font-semibold uppercase tracking-wide">
+                  Nivel da busca RAG
+                </label>
+                <div className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-1">
+                  {(["baixo", "medio", "alto"] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setLocalRagLevel(level)}
+                      aria-pressed={localRagLevel === level}
+                      className={`h-8 rounded px-3 text-xs font-semibold uppercase tracking-wide transition ${
+                        localRagLevel === level
+                          ? "bg-district-red text-white shadow-sm"
+                          : "text-subtle hover:bg-[var(--bg-elevated)] hover:text-[color:var(--text-primary)]"
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-subtle mt-2 text-xs">
+                  {localRagLevel === "baixo"
+                    ? "Busca mais estrita e focada."
+                    : localRagLevel === "medio"
+                      ? "Equilibrio entre precisao e abrangencia."
+                      : "Busca mais ampla para maior cobertura."}
+                </p>
               </div>
-              <p className="text-subtle mt-2 text-xs">
-                {localRagLevel === "baixo"
-                  ? "Busca mais estrita e focada."
-                  : localRagLevel === "medio"
-                    ? "Equilibrio entre precisao e abrangencia."
-                    : "Busca mais ampla para maior cobertura."}
-              </p>
+              <label className="inline-flex items-center gap-2 text-sm text-[color:var(--text-primary)]">
+                <input
+                  type="checkbox"
+                  checked={localLegacyFallback}
+                  onChange={(event) => setLocalLegacyFallback(event.target.checked)}
+                  className="peer sr-only"
+                />
+                <span className="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-300 transition peer-checked:bg-district-red dark:bg-gray-700">
+                  <span className="h-4 w-4 translate-x-0.5 rounded-full bg-white shadow-sm transition peer-checked:translate-x-4" />
+                </span>
+                Fallback lexical/simples
+              </label>
+              <ButtonBase
+                type="button"
+                variant="secondary"
+                onClick={handleSaveRagSettings}
+                disabled={isSavingRagSettings}
+                className="h-10 px-4 disabled:opacity-60"
+              >
+                {isSavingRagSettings ? "Salvando..." : "Salvar RAG"}
+              </ButtonBase>
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-[color:var(--text-primary)]">
-              <input
-                type="checkbox"
-                checked={localLegacyFallback}
-                onChange={(event) => setLocalLegacyFallback(event.target.checked)}
-                className="peer sr-only"
-              />
-              <span className="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-300 transition peer-checked:bg-district-red dark:bg-gray-700">
-                <span className="h-4 w-4 translate-x-0.5 rounded-full bg-white shadow-sm transition peer-checked:translate-x-4" />
-              </span>
-              Fallback lexical/simples
-            </label>
-            <ButtonBase
-              type="button"
-              variant="secondary"
-              onClick={handleSaveRagSettings}
-              disabled={isSavingRagSettings}
-              className="h-10 px-4 disabled:opacity-60"
-            >
-              {isSavingRagSettings ? "Salvando..." : "Salvar RAG"}
-            </ButtonBase>
-          </div>
+          )}
           {isLoading && <p className="text-subtle mt-2 text-sm">Carregando dados...</p>}
           {error && <p className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/20 dark:text-red-200">{error}</p>}
           {feedback && <p className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200">{feedback}</p>}

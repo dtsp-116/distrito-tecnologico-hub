@@ -186,9 +186,16 @@ export function FapiPage({ agencias }: FapiPageProps) {
             </>
           )}
           {error && (
-            <p className="rounded-lg border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
-              {error}
-            </p>
+            <div className="space-y-1">
+              <p className="rounded-lg border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
+                {error}
+              </p>
+              {(error.includes("imagem") || error.includes("OCR") || error.includes("resolucao") || error.includes("OCR_SPACE")) && (
+                <p className="text-xs text-[color:var(--text-secondary)]">
+                  Dica: para imagens, use arquivos nitidos ou maior resolucao; prefira PDF com camada de texto quando possivel. Em desenvolvimento, configure OCR_SPACE_API_KEY no .env.local.
+                </p>
+              )}
+            </div>
           )}
         </div>
 

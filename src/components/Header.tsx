@@ -12,7 +12,7 @@ interface HeaderProps {
   onMenuClick: () => void;
   agencias: Agencia[];
   activeAgencyId?: string;
-  role?: "admin" | "user" | null;
+  role?: "admin" | "editor" | "user" | null;
 }
 
 export function Header({ onMenuClick, agencias, activeAgencyId, role }: HeaderProps) {
@@ -136,6 +136,26 @@ export function Header({ onMenuClick, agencias, activeAgencyId, role }: HeaderPr
         </div>
 
         <div className="flex items-center gap-2">
+          {(role === "editor" || role === "admin") && (
+            <Link
+              href={role === "admin" ? "/admin" : "/editor"}
+              className="btn-base btn-secondary hidden h-10 items-center gap-2 px-3 text-xs md:inline-flex"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M4 4h16v4H4z" />
+                <path d="M4 10h10v4H4z" />
+                <path d="M4 16h7v4H4z" />
+              </svg>
+              <span>{role === "admin" ? "Painel admin" : "Gestao de editais"}</span>
+            </Link>
+          )}
           <Link
             href="/perfil"
             className="btn-base btn-secondary h-10 w-10 px-0"

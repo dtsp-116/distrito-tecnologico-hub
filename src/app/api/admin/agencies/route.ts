@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const createAgencySchema = z.object({
   nome: z.string().min(2),
@@ -9,7 +9,7 @@ const createAgencySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const body = await request.json();

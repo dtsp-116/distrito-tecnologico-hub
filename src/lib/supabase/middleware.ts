@@ -32,7 +32,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/fapi") ||
     pathname.startsWith("/agencia") ||
     pathname.startsWith("/edital") ||
-    pathname.startsWith("/admin");
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/editor");
 
   if (!user && requiresAuth) {
     const redirectUrl = request.nextUrl.clone();
@@ -40,19 +41,29 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && pathname.startsWith("/admin")) {
+  if (user && (pathname.startsWith("/admin") || pathname.startsWith("/editor"))) {
     const { data } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-    if (data?.role !== "admin") {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/hub";
-      return NextResponse.redirect(redirectUrl);
+
+    if (pathname.startsWith("/admin")) {
+      if (data?.role !== "admin") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = data?.role === "editor" ? "/editor" : "/hub";
+        return NextResponse.redirect(redirectUrl);
+      }
+    } else if (pathname.startsWith("/editor")) {
+      if (data?.role !== "admin" && data?.role !== "editor") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/hub";
+        return NextResponse.redirect(redirectUrl);
+      }
     }
   }
 
   if (user && isAuthPage) {
     const { data } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = data?.role === "admin" ? "/admin" : "/hub";
+    redirectUrl.pathname =
+      data?.role === "admin" ? "/admin" : data?.role === "editor" ? "/editor" : "/hub";
     return NextResponse.redirect(redirectUrl);
   }
 

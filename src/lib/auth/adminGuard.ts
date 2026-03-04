@@ -18,3 +18,21 @@ export async function ensureAdmin() {
 
   return { supabase, user };
 }
+
+export async function ensureEditorOrAdmin() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: NextResponse.json({ error: "Nao autenticado." }, { status: 401 }) };
+  }
+
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (data?.role !== "admin" && data?.role !== "editor") {
+    return { error: NextResponse.json({ error: "Acesso negado." }, { status: 403 }) };
+  }
+
+  return { supabase, user };
+}

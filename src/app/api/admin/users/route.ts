@@ -8,7 +8,7 @@ const DEFAULT_RESET_PASSWORD = "12345678";
 const createAdminUserSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  role: z.enum(["admin", "user"]).default("user"),
+  role: z.enum(["admin", "editor", "user"]).default("user"),
   password: z.string().min(8).optional()
 });
 
@@ -65,7 +65,7 @@ export async function GET() {
         profile.id,
         {
           name: profile.name ?? "Usuario",
-          role: (profile.role as "admin" | "user") ?? "user",
+          role: (profile.role as "admin" | "editor" | "user") ?? "user",
           createdAt: profile.created_at ?? null
         }
       ])

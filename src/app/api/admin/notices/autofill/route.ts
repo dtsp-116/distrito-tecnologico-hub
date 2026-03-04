@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
@@ -48,7 +48,7 @@ function tryParseJson(content: string) {
 }
 
 export async function POST(request: Request) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const body = await request.json();

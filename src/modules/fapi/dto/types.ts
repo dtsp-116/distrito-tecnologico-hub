@@ -53,6 +53,14 @@ export interface FapiEvaluationOutput {
   parsedFapi: ParsedFapi;
   agencyId: string | null;
   editalId: string | null;
+  lowTextQuality?: boolean;
+}
+
+export interface FapiExtractionErrorDetails {
+  fileName: string;
+  mimeType: string;
+  method: "text" | "ocr" | "unknown";
+  rawLength: number;
 }
 
 export interface FapiSessionMessage {

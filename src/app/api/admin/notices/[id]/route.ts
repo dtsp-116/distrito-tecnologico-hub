@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const updateNoticeSchema = z.object({
   nome: z.string().min(3),
@@ -29,7 +29,7 @@ function slugify(value: string) {
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id } = await params;
@@ -135,7 +135,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id } = await params;

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { FapiEvaluationOutput } from "@/modules/fapi/dto/types";
+import { FapiEvaluationOutput, type FapiExtractionErrorDetails } from "@/modules/fapi/dto/types";
 import { FapiRuleEngineService } from "@/modules/fapi/rule-engine/FapiRuleEngineService";
 import { extractFapiText } from "@/modules/fapi/services/fapiTextExtractionService";
 import { parseFapiStructuredData, buildFapiStructuredSummary } from "@/modules/fapi/services/fapiParsingService";
@@ -53,14 +53,23 @@ export class FapiEvaluationService {
         "Tempo limite excedido durante a extracao do arquivo."
       );
 
-      if (!extraction.text || extraction.text.length < 80) {
-        throw new Error("Nao foi possivel extrair texto suficiente da FAPI.");
+      const rawText = extraction.text ?? "";
+      const extractedText = rawText.replace(/\r/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+      if (extractedText.length === 0) {
+        const err = new Error("Nao foi possivel extrair texto da FAPI.") as Error & { details?: FapiExtractionErrorDetails };
+        err.details = {
+          fileName: input.file.fileName,
+          mimeType: input.file.mimeType,
+          method: extraction.method,
+          rawLength: rawText.length
+        };
+        throw err;
       }
 
-      const parsedFapi = parseFapiStructuredData(extraction.text);
+      const parsedFapi = parseFapiStructuredData(extractedText);
       const detectedEditalId = await detectReferencedEdital({
         supabase: this.supabase,
-        extractedText: extraction.text,
+        extractedText,
         hintEditalId: input.editalId ?? null
       });
 
@@ -72,7 +81,7 @@ export class FapiEvaluationService {
 
       const structuredSummary = buildFapiStructuredSummary(parsedFapi);
       const prompt = buildFapiEvaluationPrompt({
-        extractedText: extraction.text,
+        extractedText,
         structuredSummary,
         rules: consolidatedRules
       });
@@ -194,11 +203,12 @@ ${response}
         sessionId,
         response: normalizedResponse,
         extractedMethod: extraction.method,
-        extractedChars: extraction.text.length,
+        extractedChars: extractedText.length,
         appliedRules: consolidatedRules,
         parsedFapi,
         agencyId: input.agencyId ?? null,
-        editalId: detectedEditalId
+        editalId: detectedEditalId,
+        lowTextQuality: extractedText.length < 80
       };
     } finally {
       bytes.fill(0);

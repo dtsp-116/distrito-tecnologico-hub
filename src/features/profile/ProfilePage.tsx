@@ -15,14 +15,14 @@ interface AdminUserRow {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "user";
+  role: "admin" | "editor" | "user";
   createdAt?: string | null;
 }
 
 export function ProfilePage({ agencias }: ProfilePageProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "user" | null>(null);
+  const [role, setRole] = useState<"admin" | "editor" | "user" | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -34,13 +34,13 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
   const [adminError, setAdminError] = useState("");
   const [createUserName, setCreateUserName] = useState("");
   const [createUserEmail, setCreateUserEmail] = useState("");
-  const [createUserRole, setCreateUserRole] = useState<"admin" | "user">("user");
+  const [createUserRole, setCreateUserRole] = useState<"admin" | "editor" | "user">("user");
   const [createUserPassword, setCreateUserPassword] = useState("");
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editUserName, setEditUserName] = useState("");
   const [editUserEmail, setEditUserEmail] = useState("");
-  const [editUserRole, setEditUserRole] = useState<"admin" | "user">("user");
+  const [editUserRole, setEditUserRole] = useState<"admin" | "editor" | "user">("user");
   const [isSavingUserEdit, setIsSavingUserEdit] = useState(false);
 
   const isAdmin = role === "admin";
@@ -66,7 +66,7 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
       try {
         const response = await fetch("/api/auth/profile");
         if (!response.ok) return;
-        const data = (await response.json()) as { name?: string; email?: string; role?: "admin" | "user" };
+        const data = (await response.json()) as { name?: string; email?: string; role?: "admin" | "editor" | "user" };
         setName(data.name ?? "");
         setEmail(data.email ?? "");
         setRole(data.role ?? null);
@@ -326,10 +326,11 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
               />
               <select
                 value={createUserRole}
-                onChange={(event) => setCreateUserRole(event.target.value as "admin" | "user")}
+                onChange={(event) => setCreateUserRole(event.target.value as "admin" | "editor" | "user")}
                 className="h-10 rounded-md border border-district-border bg-white px-3 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               >
                 <option value="user">User</option>
+                <option value="editor">Editor</option>
                 <option value="admin">Admin</option>
               </select>
               <input
@@ -414,10 +415,11 @@ export function ProfilePage({ agencias }: ProfilePageProps) {
                             {isEditing ? (
                               <select
                                 value={editUserRole}
-                                onChange={(event) => setEditUserRole(event.target.value as "admin" | "user")}
+                                onChange={(event) => setEditUserRole(event.target.value as "admin" | "editor" | "user")}
                                 className="h-9 rounded-md border border-district-border bg-white px-2 text-sm text-gray-900 outline-none focus:border-district-red focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
                               >
                                 <option value="user">User</option>
+                                <option value="editor">Editor</option>
                                 <option value="admin">Admin</option>
                               </select>
                             ) : (

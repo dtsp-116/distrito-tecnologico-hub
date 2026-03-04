@@ -7,7 +7,7 @@ const updateUserSchema = z
   .object({
     name: z.string().min(2).optional(),
     email: z.string().email().optional(),
-    role: z.enum(["admin", "user"]).optional()
+    role: z.enum(["admin", "editor", "user"]).optional()
   })
   .refine((data) => Boolean(data.name || data.email || data.role), {
     message: "Informe ao menos um campo para atualizar."
@@ -56,7 +56,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       {
         id,
         name: payload.name?.trim() ?? profileResult.data?.name ?? "Usuario",
-        role: payload.role ?? ((profileResult.data?.role as "admin" | "user" | undefined) ?? "user")
+        role: payload.role ?? ((profileResult.data?.role as "admin" | "editor" | "user" | undefined) ?? "user")
       },
       { onConflict: "id" }
     );

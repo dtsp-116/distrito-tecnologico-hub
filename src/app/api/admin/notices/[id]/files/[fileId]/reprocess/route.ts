@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 import { ingestNoticeFileRag } from "@/lib/rag/ingestNoticeFile";
 
 const STORAGE_BUCKET = "notice-files";
@@ -8,7 +8,7 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string; fileId: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id: noticeId, fileId } = await params;

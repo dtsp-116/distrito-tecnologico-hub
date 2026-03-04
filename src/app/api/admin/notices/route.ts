@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const createNoticeSchema = z.object({
   nome: z.string().min(3),
@@ -29,7 +29,7 @@ function slugify(value: string) {
 }
 
 export async function POST(request: Request) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const body = await request.json();

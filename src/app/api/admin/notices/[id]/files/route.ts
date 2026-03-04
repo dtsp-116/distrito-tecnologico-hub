@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 import { ingestNoticeFileRag } from "@/lib/rag/ingestNoticeFile";
 
 const STORAGE_BUCKET = "notice-files";
@@ -8,7 +8,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id: noticeId } = await params;
@@ -91,7 +91,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id: noticeId } = await params;

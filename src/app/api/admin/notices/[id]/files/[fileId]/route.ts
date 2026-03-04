@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const patchFileSchema = z.object({
   displayName: z.string().min(1)
@@ -10,7 +10,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; fileId: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id, fileId } = await params;
@@ -46,7 +46,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string; fileId: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const { id, fileId } = await params;

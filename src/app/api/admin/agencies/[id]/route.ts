@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 
 const updateAgencySchema = z.object({
   nome: z.string().min(2).optional(),
@@ -10,11 +10,12 @@ const updateAgencySchema = z.object({
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
+  const { id } = await params;
   const body = await request.json();
   const parsed = updateAgencySchema.safeParse(body);
 
@@ -39,7 +40,7 @@ export async function PATCH(
   const { data, error } = await auth.supabase
     .from("agencies")
     .update(update)
-    .eq("id", params.id)
+    .eq("id", id)
     .select("id,name,acronym,description")
     .single();
 
@@ -57,15 +58,16 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
+  const { id } = await params;
   const { error } = await auth.supabase
     .from("agencies")
     .delete()
-    .eq("id", params.id);
+    .eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

@@ -75,17 +75,19 @@ export async function extractTextFromFile(fileName: string, mimeType: string, by
       pdfText = "";
     }
 
-    if (pdfText.length >= 120) {
+    if (pdfText.length >= 80) {
       return { text: pdfText, method: "text" };
     }
 
-    // Fallback OCR opcional para PDFs escaneados sem camada de texto.
+    // Fallback OCR para PDFs escaneados ou com pouco texto extraído.
     const ocrText = await extractTextWithOcrSpaceIfConfigured(fileName, bytes);
     if (ocrText.length > pdfText.length) {
       return { text: ocrText, method: "ocr" };
     }
-
-    return { text: pdfText, method: "text" };
+    if (pdfText.length > 0) {
+      return { text: pdfText, method: "text" };
+    }
+    return { text: ocrText, method: ocrText.length > 0 ? "ocr" : "unknown" };
   }
 
   if (

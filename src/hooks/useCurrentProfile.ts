@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 
 interface CurrentProfile {
-  role: "admin" | "user" | null;
+  role: "admin" | "editor" | "user" | null;
   isLoading: boolean;
 }
 
 export function useCurrentProfile(): CurrentProfile {
-  const [role, setRole] = useState<"admin" | "user" | null>(null);
+  const [role, setRole] = useState<"admin" | "editor" | "user" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export function useCurrentProfile(): CurrentProfile {
           setRole(null);
           return;
         }
-        const data = (await response.json()) as { role?: "admin" | "user" };
+        const data = (await response.json()) as { role?: "admin" | "editor" | "user" };
         setRole(data.role ?? null);
       } finally {
         setIsLoading(false);

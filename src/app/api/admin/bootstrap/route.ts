@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { ensureAdmin } from "@/lib/auth/adminGuard";
+import { ensureEditorOrAdmin } from "@/lib/auth/adminGuard";
 import { getAdminUploadedFiles, getHubData } from "@/lib/data/hubRepository";
 
 export async function GET() {
-  const auth = await ensureAdmin();
+  const auth = await ensureEditorOrAdmin();
   if ("error" in auth) return auth.error;
 
   const [hubData, uploadedFiles] = await Promise.all([getHubData(), getAdminUploadedFiles()]);
