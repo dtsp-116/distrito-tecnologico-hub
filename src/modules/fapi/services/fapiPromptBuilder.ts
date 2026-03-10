@@ -12,7 +12,9 @@ export function buildFapiEvaluationPrompt(input: {
   structuredSummary: string;
   rules: ConsolidatedRule[];
 }) {
-  return `
+  const hasThematicRule = input.rules.some((rule) => rule.type === "agencia" || rule.type === "edital");
+
+  let template = `
 Voce e um avaliador tecnico de projetos de inovacao do SENAI-SP.
 
 Analise a FAPI enviada de forma OBJETIVA, direta e estruturada.
@@ -92,13 +94,32 @@ Status: OK ou NAO OK
 Se NAO OK:
 - Problema identificado: explique brevemente o problema (ex.: TRL incoerente com escopo, justificativa fraca, salto tecnologico irrealista).
 - Sugestao de melhoria: explique como o avancode TRL deveria ser ajustado ou melhor justificado.
+`;
+
+  if (hasThematicRule) {
+    template += `
+
+---
+
+ADERENCIA TEMATICA / LINHA TECNOLOGICA  
+Classificacao: Alta, Media, Baixa ou Sem aderencia
+
+- Linha tecnologica identificada: indique qual linha ou eixo tematico melhor se relaciona com a proposta (ou informe que nenhuma linha esta claramente identificada).
+- Justificativa tecnica: explique objetivamente por que o projeto se enquadra (ou nao) nas linhas/tematicas definidas pelas regras de agencia/edital.
+- Sugestao de enquadramento: quando houver baixa aderencia ou falta de alinhamento, sugira como o projeto poderia ser ajustado para se alinhar melhor as linhas/tematicas da unidade.
+`;
+  }
+
+  template += `
 
 ---
 
 Importante:
 - Sempre alinhe a analise as regras institucionais e as boas praticas de projetos de inovacao.
 - Evite termos que impliquem compromisso institucional (como garantir, assegurar, validar).
-`.trim();
+`;
+
+  return template.trim();
 }
 
 export function buildFapiChatPrompt(input: {
