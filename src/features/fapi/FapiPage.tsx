@@ -147,25 +147,35 @@ export function FapiPage({ agencias }: FapiPageProps) {
       <FapiChatLayout onReset={handleReset}>
         <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
           {!sessionId ? (
-            <form onSubmit={handleAnalyze} className="space-y-3">
-              <AgencySelector agencies={agencias} value={agencyId} onChange={setAgencyId} />
-              <UploadArea selectedFile={selectedFile} onFileChange={setSelectedFile} isLoading={isAnalyzing} />
-              <button
-                type="submit"
-                disabled={isAnalyzing}
-                className="btn-base btn-primary h-10 w-full disabled:opacity-60"
-              >
-                {isAnalyzing ? "Analisando FAPI..." : "Iniciar analise tecnica"}
-              </button>
-              {isAnalyzing && (
-                <div className="mt-3 flex flex-col items-center gap-2 text-xs text-subtle" aria-live="polite">
-                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-[color:var(--primary-soft)] border-t-[color:var(--primary)]" />
-                  <p className="text-[color:var(--text-primary)]">
-                    Estamos lendo a sua FAPI com cuidado. Isso pode levar alguns segundos.
-                  </p>
-                </div>
-              )}
-            </form>
+            <>
+              <div className="mb-3">
+                <MessageBubble
+                  role="assistant"
+                  content={
+                    "Envie a **FAPI (one page)** do seu projeto em PDF ou imagem e eu farei uma avaliacao tecnica estruturada. Em seguida, voce podera **continuar a conversa** tirando duvidas ou pedindo ajustes finos na redacao."
+                  }
+                />
+              </div>
+              <form onSubmit={handleAnalyze} className="space-y-3">
+                <AgencySelector agencies={agencias} value={agencyId} onChange={setAgencyId} />
+                <UploadArea selectedFile={selectedFile} onFileChange={setSelectedFile} isLoading={isAnalyzing} />
+                <button
+                  type="submit"
+                  disabled={isAnalyzing}
+                  className="btn-base btn-primary h-10 w-full disabled:opacity-60"
+                >
+                  {isAnalyzing ? "Analisando FAPI..." : "Iniciar analise tecnica"}
+                </button>
+                {isAnalyzing && (
+                  <div className="mt-3 flex flex-col items-center gap-2 text-xs text-subtle" aria-live="polite">
+                    <div className="h-7 w-7 animate-spin rounded-full border-2 border-[color:var(--primary-soft)] border-t-[color:var(--primary)]" />
+                    <p className="text-[color:var(--text-primary)]">
+                      Estamos lendo a sua FAPI com cuidado. Isso pode levar alguns segundos.
+                    </p>
+                  </div>
+                )}
+              </form>
+            </>
           ) : (
             <>
               {evaluationMeta && (
