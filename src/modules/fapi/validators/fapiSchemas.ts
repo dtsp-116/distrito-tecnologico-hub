@@ -65,3 +65,14 @@ export const updateFapiRuleSchema = fapiRuleBaseSchema.partial().superRefine((va
     });
   }
 });
+
+export const fapiWritingSchema = z.object({
+  briefing: z.string().min(20).max(6000),
+  agencyId: uuidSchema.nullable().optional(),
+  editalId: uuidSchema.nullable().optional()
+});
+
+export const fapiWritingChatSchema = z.object({
+  sessionId: uuidSchema,
+  message: z.string().min(2).max(4000)
+});

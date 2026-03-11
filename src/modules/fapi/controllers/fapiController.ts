@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FapiEvaluationService } from "@/modules/fapi/services/FapiEvaluationService";
 import { FapiChatService } from "@/modules/fapi/services/FapiChatService";
-import { fapiChatSchema } from "@/modules/fapi/validators/fapiSchemas";
+import { FapiWritingService } from "@/modules/fapi/services/FapiWritingService";
+import { FapiWritingChatService } from "@/modules/fapi/services/FapiWritingChatService";
+import { fapiChatSchema, fapiWritingChatSchema, fapiWritingSchema } from "@/modules/fapi/validators/fapiSchemas";
 import { sanitizeUserText } from "@/modules/fapi/services/requestGuards";
-import { resetFapiSession } from "@/modules/fapi/services/sessionStore";
+import { resetFapiSession, resetFapiWritingSession } from "@/modules/fapi/services/sessionStore";
 
 export async function analyzeFapiController(input: {
   supabase: SupabaseClient;
@@ -54,6 +56,50 @@ export async function chatWithFapiController(input: {
 
 export function resetFapiSessionController(input: { sessionId: string; userId: string }) {
   const reset = resetFapiSession(input.sessionId, input.userId);
+  if (!reset) {
+    throw new Error("Sessao nao encontrada.");
+  }
+  return { reset: true };
+}
+
+export async function writeFapiController(input: {
+  supabase: SupabaseClient;
+  userId: string;
+  body: unknown;
+}) {
+  const parsed = fapiWritingSchema.safeParse(input.body);
+  if (!parsed.success) {
+    throw new Error("Payload invalido.");
+  }
+
+  const service = new FapiWritingService(input.supabase);
+  return service.generate({
+    userId: input.userId,
+    agencyId: parsed.data.agencyId ?? null,
+    editalId: parsed.data.editalId ?? null,
+    briefing: parsed.data.briefing
+  });
+}
+
+export async function chatWithFapiWritingController(input: {
+  userId: string;
+  body: unknown;
+}) {
+  const parsed = fapiWritingChatSchema.safeParse(input.body);
+  if (!parsed.success) {
+    throw new Error("Payload invalido.");
+  }
+
+  const service = new FapiWritingChatService();
+  return service.refine({
+    sessionId: parsed.data.sessionId,
+    userId: input.userId,
+    message: parsed.data.message
+  });
+}
+
+export function resetFapiWritingSessionController(input: { sessionId: string; userId: string }) {
+  const reset = resetFapiWritingSession(input.sessionId, input.userId);
   if (!reset) {
     throw new Error("Sessao nao encontrada.");
   }

@@ -68,3 +68,37 @@ export interface FapiSessionMessage {
   content: string;
   createdAt: number;
 }
+
+export interface FapiWritingSession {
+  sessionId: string;
+  userId: string;
+  agencyId: string | null;
+  editalId: string | null;
+  appliedRules: ConsolidatedRule[];
+  briefing: string;
+  draftFapi: string;
+  messages: FapiSessionMessage[];
+  expiresAt: number;
+}
+
+export interface FapiWritingRequest {
+  userId: string;
+  agencyId?: string | null;
+  editalId?: string | null;
+  briefing: string;
+}
+
+export interface FapiWritingResponse {
+  sessionId: string;
+  draftFapi: string;
+  appliedRules: ConsolidatedRule[];
+}
+
+export interface FapiWritingChatRequest {
+  sessionId: string;
+  message: string;
+}
+
+export interface FapiWritingChatResponse {
+  content: string;
+}

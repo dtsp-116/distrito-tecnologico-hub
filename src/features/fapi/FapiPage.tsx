@@ -21,6 +21,7 @@ interface FapiMessage {
 }
 
 export function FapiPage({ agencias }: FapiPageProps) {
+  const [mode, setMode] = useState<"write" | "analyze">("analyze");
   const [agencyId, setAgencyId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -36,6 +37,14 @@ export function FapiPage({ agencias }: FapiPageProps) {
   } | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  // Escrita de FAPI
+  const [writeSessionId, setWriteSessionId] = useState<string | null>(null);
+  const [writeMessages, setWriteMessages] = useState<FapiMessage[]>([]);
+  const [writeDraft, setWriteDraft] = useState("");
+  const [isWriting, setIsWriting] = useState(false);
+  const [isWritingReplying, setIsWritingReplying] = useState(false);
+  const [writeAppliedRuleCount, setWriteAppliedRuleCount] = useState(0);
+
   const activeAgencyId = useMemo(() => {
     return agencyId || undefined;
   }, [agencyId]);
@@ -49,18 +58,32 @@ export function FapiPage({ agencias }: FapiPageProps) {
 
   const handleReset = async () => {
     setError("");
-    if (sessionId) {
-      await fetch("/api/fapi/session/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId })
-      });
+    if (mode === "analyze") {
+      if (sessionId) {
+        await fetch("/api/fapi/session/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        });
+      }
+      setSessionId(null);
+      setMessages([]);
+      setEvaluationMeta(null);
+      setSelectedFile(null);
+      setDraft("");
+    } else {
+      if (writeSessionId) {
+        await fetch("/api/fapi/write/session/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: writeSessionId })
+        });
+      }
+      setWriteSessionId(null);
+      setWriteMessages([]);
+      setWriteDraft("");
+      setWriteAppliedRuleCount(0);
     }
-    setSessionId(null);
-    setMessages([]);
-    setEvaluationMeta(null);
-    setSelectedFile(null);
-    setDraft("");
   };
 
   const handleAnalyze = async (event: FormEvent<HTMLFormElement>) => {
@@ -142,11 +165,114 @@ export function FapiPage({ agencias }: FapiPageProps) {
     }
   };
 
+  const handleWriteGenerate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!writeDraft.trim()) {
+      setError("Descreva o briefing da FAPI para gerar uma proposta.");
+      return;
+    }
+
+    setError("");
+    setIsWriting(true);
+    try {
+      const payload = {
+        briefing: writeDraft.trim(),
+        agencyId: agencyId || null
+      };
+
+      const response = await fetch("/api/fapi/write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        sessionId?: string;
+        draftFapi?: string;
+        appliedRules?: Array<{ id: string }>;
+      };
+
+      if (!response.ok || !data.sessionId || !data.draftFapi) {
+        throw new Error(data.error ?? "Falha ao gerar FAPI a partir do briefing.");
+      }
+
+      setWriteSessionId(data.sessionId);
+      setWriteAppliedRuleCount(data.appliedRules?.length ?? 0);
+      setWriteMessages([
+        { id: crypto.randomUUID(), role: "user", content: writeDraft.trim() },
+        { id: crypto.randomUUID(), role: "assistant", content: data.draftFapi }
+      ]);
+      setWriteDraft("");
+      scrollToBottom();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao gerar FAPI a partir do briefing.");
+    } finally {
+      setIsWriting(false);
+    }
+  };
+
+  const handleWriteChat = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!writeSessionId || !writeDraft.trim() || isWritingReplying) return;
+
+    const userMessage: FapiMessage = { id: crypto.randomUUID(), role: "user", content: writeDraft.trim() };
+    setWriteMessages((current) => [...current, userMessage]);
+    setWriteDraft("");
+    setIsWritingReplying(true);
+    setError("");
+    scrollToBottom();
+
+    try {
+      const response = await fetch("/api/fapi/write/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: writeSessionId,
+          message: userMessage.content
+        })
+      });
+      const data = (await response.json()) as { error?: string; content?: string };
+      if (!response.ok || !data.content) {
+        throw new Error(data.error ?? "Falha ao refinar a FAPI.");
+      }
+      setWriteMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: data.content ?? "" }]);
+      scrollToBottom();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao refinar a FAPI.");
+    } finally {
+      setIsWritingReplying(false);
+    }
+  };
+
   return (
     <MainLayout agencias={agencias} activeAgencyId={activeAgencyId}>
       <FapiChatLayout onReset={handleReset}>
+        <div className="border-b px-3 pb-2 pt-2.5 text-xs" style={{ borderColor: "var(--border-color)" }}>
+          <div className="inline-flex rounded-full bg-[color:var(--bg-elevated)] p-0.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setMode("write")}
+              className={`rounded-full px-3 py-1 font-medium ${
+                mode === "write" ? "bg-[color:var(--primary-soft)] text-[color:var(--primary)]" : "text-subtle"
+              }`}
+            >
+              Escrever FAPI
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("analyze")}
+              className={`rounded-full px-3 py-1 font-medium ${
+                mode === "analyze" ? "bg-[color:var(--primary-soft)] text-[color:var(--primary)]" : "text-subtle"
+              }`}
+            >
+              Analisar FAPI pronta
+            </button>
+          </div>
+        </div>
+
         <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
-          {!sessionId ? (
+          {mode === "analyze" ? (
+            !sessionId ? (
             <>
               <div className="mb-3">
                 <MessageBubble
@@ -176,7 +302,7 @@ export function FapiPage({ agencias }: FapiPageProps) {
                 )}
               </form>
             </>
-          ) : (
+            ) : (
             <>
               {evaluationMeta && (
                 <EvaluationResultCard
@@ -194,7 +320,63 @@ export function FapiPage({ agencias }: FapiPageProps) {
                 </p>
               )}
             </>
-          )}
+            )
+          ) : mode === "write" ? (
+            !writeSessionId ? (
+              <>
+                <div className="mb-3">
+                  <MessageBubble
+                    role="assistant"
+                    content={
+                      "Me conte sobre o projeto (empresa, problema, solucao proposta, valor aproximado, duracao e TRL atual/desejado) e eu vou montar uma **FAPI completa one-page** seguindo as regras gerais e da agencia/editais selecionados. Depois voce podera pedir ajustes finos via chat antes de colar no formulario oficial."
+                    }
+                  />
+                </div>
+                <form onSubmit={handleWriteGenerate} className="space-y-3">
+                  <AgencySelector agencies={agencias} value={agencyId} onChange={setAgencyId} />
+                  <label className="space-y-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-subtle">Briefing do projeto</span>
+                    <textarea
+                      value={writeDraft}
+                      onChange={(event) => setWriteDraft(event.target.value)}
+                      rows={6}
+                      className="textarea-base"
+                      placeholder="Explique o projeto: contexto, problema, solucao proposta, publico alvo, valor aproximado, TRL atual e TRL desejado..."
+                    />
+                  </label>
+                  <p className="text-[11px] text-[color:var(--text-secondary)]">
+                    Dica: informe tudo que voce ja souber. Se algum dado ainda nao existir, a IA marcara como <strong>NAO INFORMADO</strong> e podera sugerir perguntas para completar depois.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={isWriting}
+                    className="btn-base btn-primary h-10 w-full disabled:opacity-60"
+                  >
+                    {isWriting ? "Gerando FAPI..." : "Gerar FAPI a partir do briefing"}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                {writeAppliedRuleCount > 0 && (
+                  <div className="panel-muted mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] text-[color:var(--text-secondary)]">
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--primary-soft)] text-[10px] text-[color:var(--primary)]">
+                      R
+                    </span>
+                    <span>FAPI escrita com {writeAppliedRuleCount} regra(s) aplicada(s) (gerais, agencia e/ou edital).</span>
+                  </div>
+                )}
+                {writeMessages.map((message) => (
+                  <MessageBubble key={message.id} role={message.role} content={message.content} />
+                ))}
+                {isWritingReplying && (
+                  <p className="text-xs font-medium text-[color:var(--primary)]" aria-live="polite">
+                    Assistente reformulando a FAPI...
+                  </p>
+                )}
+              </>
+            )
+          ) : null}
           {error && (
             <div className="space-y-1">
               <p className="rounded-lg border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
@@ -209,7 +391,7 @@ export function FapiPage({ agencias }: FapiPageProps) {
           )}
         </div>
 
-        {sessionId && (
+        {mode === "analyze" && sessionId && (
           <form onSubmit={handleSendMessage} className="sticky bottom-0 grid grid-cols-[1fr_auto] gap-2 border-t p-3" style={{ borderColor: "var(--border-color)", background: "var(--bg-elevated)" }}>
             <input
               value={draft}
@@ -221,6 +403,24 @@ export function FapiPage({ agencias }: FapiPageProps) {
               type="submit"
               variant="primary"
               disabled={isReplying || !draft.trim()}
+              className="h-10 px-4 disabled:opacity-60"
+            >
+              Enviar
+            </ButtonBase>
+          </form>
+        )}
+        {mode === "write" && writeSessionId && (
+          <form onSubmit={handleWriteChat} className="sticky bottom-0 grid grid-cols-[1fr_auto] gap-2 border-t p-3" style={{ borderColor: "var(--border-color)", background: "var(--bg-elevated)" }}>
+            <input
+              value={writeDraft}
+              onChange={(event) => setWriteDraft(event.target.value)}
+              placeholder="Peça ajustes na FAPI gerada (ex.: simplificar objetivo, focar mais na inovacao)..."
+              className="input-base h-10"
+            />
+            <ButtonBase
+              type="submit"
+              variant="primary"
+              disabled={isWritingReplying || !writeDraft.trim()}
               className="h-10 px-4 disabled:opacity-60"
             >
               Enviar
